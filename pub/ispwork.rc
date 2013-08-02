@@ -41,7 +41,7 @@ case "$1" in
 
 		log_progress_msg "$ISPTASKCLIENT"
 		
-		if ! start-stop-daemon --start -b -c ${ISPUSER} -d ${ISPWORKPUB} -x ${PHPBIN} -- ${ISPTASKCLIENT} ${ISPPROCS}; then
+		if ! start-stop-daemon --start -b -c $ISPUSER -d $ISPWORKPUB -p $TCLDPID -x $PHPBIN -- $ISPTASKCLIENT $ISPPROCS; then
 			log_end_msg 1
 			exit 1
 		fi

@@ -351,10 +351,12 @@ function EndpointPingTask($task)
 			
 			if ($best !== false)
 			{
+				/*
 				echo "Endping: list (" 
 				   . IPZero($best) 
 				   . "$bhit) = $ms\n"
 				   ;
+				*/
 			}
 			else
 			{
