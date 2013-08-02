@@ -440,10 +440,10 @@ function PingTask($task)
 			$ms = Ping($ip);
 			array_push($result[ "list" ],$ms);
 			
-			echo "Ping: " . IPZero($ip) . " => $ms\n";
-
-			if (! CheckLine()) return null;
+			//echo "Ping: " . IPZero($ip) . " => $ms\n";
 		}
+
+		if (! CheckLine()) return null;
 		
 		echo "Ping: from " . IPZero($from) . " upto " . IPZero($upto) . " done.\n";
 	}
