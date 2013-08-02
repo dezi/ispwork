@@ -332,6 +332,8 @@ function EndpointPingTask($task)
 			}
 			else
 			{
+				$best = false;
+				
 				for ($pingip = $from; $pingip < $upto; $pingip++)
 				{
 					$ms = Ping(Bin2IP($pingip));
