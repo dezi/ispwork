@@ -119,7 +119,24 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 {	
 	$time = -1;
 
-	$socket = $GLOBALS[ "socket" ];
+   	if ($GLOBALS[ "uname" ] == "Darwin")
+	{
+		//
+		// Darwin/OSX cannot re-connect socket. Create new.
+		//
+		
+		$socket = @socket_create(AF_INET,SOCK_RAW,1);
+		
+		$timeout = 100;
+		$sec  = floor($timeout / 1000);
+		$usec = ($timeout % 1000) * 1000;
+	
+		socket_set_option($socket,SOL_SOCKET,SO_RCVTIMEO,array("sec" => $sec, "usec" => $usec));
+	}
+	else
+	{
+		$socket = $GLOBALS[ "socket" ];
+	}
 	
 	if (@socket_connect($socket,$host,null) === false)
 	{
@@ -144,7 +161,16 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 			if ($time <= 1) $time = -1;
 		} 
 	}
-   
+	
+   	if ($GLOBALS[ "uname" ] == "Darwin")
+   	{
+		//
+		// Darwin/OSX cannot re-connect socket. Close old.
+		//
+		
+   		socket_close($socket);
+   	}
+   	
 	return $time;
 }
 
@@ -449,6 +475,11 @@ function CheckPing(&$tasks)
 	array_push($tasks,"ping");
 	array_push($tasks,"endping");
 
+	return true;
+}
+
+function CheckSudo(&$tasks)
+{
 	//
     // Try to create a priveleged raw icmp socket.
     //
@@ -466,9 +497,11 @@ function CheckPing(&$tasks)
 		array_push($tasks,"sudoping");
 		
 		$GLOBALS[ "socket" ] = $socket;
+		
+		return true;
 	}
 	
-	return true;
+	return false;
 }
 
 function MainLoop($server_host,$server_port)
@@ -495,6 +528,7 @@ function MainLoop($server_host,$server_port)
 	
 	if (CheckMtr ($hello[ "tasks" ])) echo "Have mtr...\n";
 	if (CheckPing($hello[ "tasks" ])) echo "Have ping...\n";
+	if (CheckSudo($hello[ "tasks" ])) echo "Have sudo...\n";
 
 	$hellopacket = EncodeMessage($hello);
 	$sorrysleep  = 2;
@@ -638,10 +672,16 @@ function ForkProcs($selfname,$numprocs)
 	
 	$GLOBALS[ "shutdown" ] = false;
 	
-	pcntl_signal(SIGTERM,"Shutdown");
-	pcntl_signal(SIGHUP, "Shutdown");
-	pcntl_signal(SIGUSR1,"Shutdown");
-
+	if (function_exists("pcntl_signal"))
+	{
+		pcntl_signal(SIGTERM,"Shutdown");
+		pcntl_signal(SIGHUP, "Shutdown");
+		pcntl_signal(SIGUSR1,"Shutdown");
+	}
+	
+	if (! is_dir("../run")) mkdir("../run",0755);
+	if (! is_dir("../log")) mkdir("../log",0755);
+	
 	file_put_contents("../run/$selfname.pid",getmypid());
 	
 	$procs = array();
