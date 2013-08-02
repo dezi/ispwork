@@ -432,20 +432,20 @@ function PingTask($task)
 		$from = IP2Bin($task[ "from" ]);
 		$upto = IP2Bin($task[ "upto" ]);
 		
-		echo "Ping: from " . IPZero($from) . " upto " . IPZero($upto) . " start...\n";
+		echo "Ping: from " . IPZero($from) . "\n";
+		echo "Ping: upto " . IPZero($upto) . "\n";
 		
 		for ($binip = $from; $binip <= $upto; $binip++)
 		{
 			$ip = Bin2IP($binip);
 			$ms = Ping($ip);
-			array_push($result[ "list" ],$ms);
 			
-			//echo "Ping: " . IPZero($ip) . " => $ms\n";
+			array_push($result[ "list" ],$ms);
 		}
 
 		if (! CheckLine()) return null;
 		
-		echo "Ping: from " . IPZero($from) . " upto " . IPZero($upto) . " done.\n";
+		echo "Ping: from " . IPZero($from) . " done.\n";
 	}
 	
 	return $result;
