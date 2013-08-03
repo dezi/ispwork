@@ -5,15 +5,48 @@ $GLOBALS[ "uname" ] = trim(`uname`);
 $GLOBALS[ "server_host" ] = "xberry.org";
 $GLOBALS[ "server_port" ] = 11042;
 
+function Logflush()
+{
+	fflush($GLOBALS[ "logfd" ]);
+}
+
 function Logdat($message)
 {
+	$logfile = "../log/taskclient.log";
+	
 	if (! isset($GLOBALS[ "logfd" ]))
 	{
-		$GLOBALS[ "logfd" ] = fopen("../log/taskclient.log","a");
+		if (file_exists($logfile))
+		{
+			$GLOBALS[ "logdt" ] = date("Ymd",filemtime($logfile));
+		}
+		else
+		{
+			$GLOBALS[ "logdt" ] = date("Ymd");
+		}
+		
+		$GLOBALS[ "logfd" ] = fopen($logfile,"a");
+		
+		chmod($logfile,0666);
 	}
 	
-	fputs ($GLOBALS[ "logfd" ],$message);
-	fflush($GLOBALS[ "logfd" ]);
+	if ($GLOBALS[ "logdt" ] != date("Ymd"))
+	{
+		//
+		// Log file expired, re-open.
+		//
+		
+		fclose($GLOBALS[ "logfd" ]);
+		
+		rename($logfile,substr($logfile,0,-4) . "." . $GLOBALS[ "logdt" ] . ".log");
+		
+		$GLOBALS[ "logfd" ] = fopen($logfile,"a");
+		$GLOBALS[ "logdt" ] = filemtime($logfile);
+		
+		chmod($logfile,0666);
+	}
+	
+	fputs($GLOBALS[ "logfd" ],$message);
 }
 
 function EncodeMessage($message)
@@ -77,11 +110,11 @@ function IPZero($ip)
 	return $ip;
 }
 
-function Ping($host)
+function Ping($host,$timeout = 100,$quiet = true)
 {
 	if (isset($GLOBALS[ "socket" ]))
 	{
-		return SudoPing($host);
+		return SudoPing($host,$timeout,$quiet);
 	}
 	
 	return UserPing($host);
@@ -138,6 +171,11 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 		$socket = $GLOBALS[ "socket" ];
 	}
 	
+	$sec  = floor($timeout / 1000);
+	$usec = ($timeout % 1000) * 1000;
+
+	socket_set_option($socket,SOL_SOCKET,SO_RCVTIMEO,array("sec" => $sec, "usec" => $usec));
+	
 	if (@socket_connect($socket,$host,null) === false)
 	{
 		if (! $quiet) echo "Cannot resolve '$host'.\n";
@@ -148,7 +186,7 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 		$start_time = ((float) $start_usec + (float) $start_sec);
 
 		$package = "\x08\x00\x19\x2f\x00\x00\x00\x00\x70\x69\x6e\x67";
-		socket_send($socket,$package,strlen($package),0);
+		@socket_send($socket,$package,strlen($package),0);
 
 		if (@socket_read($socket,255)) 
 		{
@@ -340,17 +378,25 @@ function EndpointPingTask($task)
 		
 		echo "Endping: list ($todo) start...\n";
 		
-		foreach ($task[ "list" ] as $ip)
+		while (count($task[ "list" ]))
 		{
-						
+			$ip   = array_shift($task[ "list" ]);
+			$best = array_shift($task[ "best" ]);
+
+			echo "Endping: list (" . IPZero($ip) . ")\n";
+
 			$from = IP2Bin($ip);
 			$upto = $from + $maxp;
 			$ms   = -1;
 			
 			$bhit = "-";
-			$best = array_pop($task[ "best" ]);
-			
-			if ($best !== false) $ms = Ping($best);
+		 
+			if ($best !== false) 
+			{
+				$ms = Ping($best);
+				
+				if ($ms == -1) $ms = UserPing($best);
+			}
 			
 			if ($ms != -1)
 			{
@@ -358,10 +404,13 @@ function EndpointPingTask($task)
 			}
 			else
 			{
-				$best = false;
+				$maxtry = $upto - $from;
+				$pingip = ($best !== false) ? IP2Bin($best) : $from;
 				
-				for ($pingip = $from; $pingip < $upto; $pingip++)
+				while ($maxtry-- > 0)
 				{
+					//echo "Endping: list (" . IPZero($pingip) . ")\n";
+					
 					$ms = Ping(Bin2IP($pingip));
 					
 					if ($ms != -1) 
@@ -369,6 +418,8 @@ function EndpointPingTask($task)
 						$best = Bin2IP($pingip);
 						break;
 					}
+					
+					if (++$pingip >= $upto) $pingip = $from;
 				}
 			}
 
@@ -377,12 +428,10 @@ function EndpointPingTask($task)
 			
 			if ($best !== false)
 			{
-				/*
 				echo "Endping: list (" 
 				   . IPZero($best) 
 				   . "$bhit) = $ms\n"
 				   ;
-				*/
 			}
 			else
 			{
@@ -431,21 +480,20 @@ function PingTask($task)
 	{
 		$from = IP2Bin($task[ "from" ]);
 		$upto = IP2Bin($task[ "upto" ]);
+		$pcnt = $upto - $from;
 		
-		echo "Ping: from " . IPZero($from) . "\n";
-		echo "Ping: upto " . IPZero($upto) . "\n";
+		echo "Ping: " . IPZero($from) . "/" . $pcnt . " start...\n";
 		
 		for ($binip = $from; $binip <= $upto; $binip++)
 		{
-			$ip = Bin2IP($binip);
-			$ms = Ping($ip);
+			$ms = Ping(Bin2IP($binip));
 			
 			array_push($result[ "list" ],$ms);
 		}
 
 		if (! CheckLine()) return null;
 		
-		echo "Ping: from " . IPZero($from) . " done.\n";
+		echo "Ping: " . IPZero($from) . "/" .  $pcnt . "done...\n";
 	}
 	
 	return $result;
@@ -486,22 +534,14 @@ function CheckSudo(&$tasks)
 	
 	$socket = @socket_create(AF_INET,SOCK_RAW,1);
 	
-    if ($socket !== false)
-    {
-		$timeout = 100;
-		$sec  = floor($timeout / 1000);
-		$usec = ($timeout % 1000) * 1000;
+    if ($socket === false) return false;
+    	
+	$GLOBALS[ "socket" ] = $socket;
 	
-		socket_set_option($socket,SOL_SOCKET,SO_RCVTIMEO,array("sec" => $sec, "usec" => $usec));
-		
-		array_push($tasks,"sudoping");
-		
-		$GLOBALS[ "socket" ] = $socket;
-		
-		return true;
-	}
+	array_push($tasks,"sudoping");
 	
-	return false;
+	
+	return true;
 }
 
 function MainLoop($server_host,$server_port)
@@ -519,7 +559,7 @@ function MainLoop($server_host,$server_port)
     $hello = array();
     
     $hello[ "what"    ] = "hello";
-    $hello[ "version" ] = "1.0";
+    $hello[ "version" ] = "1.01";
     $hello[ "tasks"   ] = array();
 	
 	//
@@ -701,14 +741,18 @@ function ForkProcs($selfname,$numprocs)
 	
 	while (! $GLOBALS[ "shutdown" ])
 	{			
-		usleep(25);
+		usleep(100000);
 
 		for ($inx = 0; $inx < $numprocs; $inx++)
 		{
 			$line = fgets($pipes[ $inx ][ 1 ]);
 			
-			if ($line !== false) Logdat(str_pad($inx,2,"0",STR_PAD_LEFT) . ":" . $line);
+			if ($line === false) continue;
+			
+			Logdat(str_pad($inx,2,"0",STR_PAD_LEFT) . ":" . $line);
 		}
+		
+		Logflush();
 	}
 	
 	Logdat("Shutdown all clients...\n");
