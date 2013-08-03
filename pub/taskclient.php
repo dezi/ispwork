@@ -770,6 +770,8 @@ function ForkProcs($selfname,$numprocs)
 
 function Main()
 {
+	date_default_timezone_set("UTC");
+
 	if (count($_SERVER[ "argv" ]) > 1)
 	{
 		$selfname = $_SERVER[ "argv" ][ 0 ];
