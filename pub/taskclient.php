@@ -7,7 +7,7 @@ $GLOBALS[ "server_port" ] = 11042;
 
 function Logflush()
 {
-	fflush($GLOBALS[ "logfd" ]);
+	if ($GLOBALS[ "logfd" ]) fflush($GLOBALS[ "logfd" ]);
 }
 
 function Logdat($message)
