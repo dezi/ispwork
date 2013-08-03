@@ -471,7 +471,7 @@ function PingTask($task)
 
 		if (! CheckLine()) return null;
 		
-		echo "Ping: " . IPZero($from) . "/" .  $pcnt . "done...\n";
+		echo "Ping: " . IPZero($from) . "/" .  $pcnt . " done...\n";
 	}
 	
 	return $result;
