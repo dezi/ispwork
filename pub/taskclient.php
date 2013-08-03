@@ -26,7 +26,13 @@ function Logdat($message)
 		}
 		
 		$GLOBALS[ "logfd" ] = fopen($logfile,"a");
-		
+
+		if (! $GLOBALS[ "logfd" ])
+		{
+			echo "Cannot open logfile...\n";
+			exit();
+		}
+
 		chmod($logfile,0666);
 	}
 	
@@ -112,7 +118,7 @@ function IPZero($ip)
 
 function Ping($host,$timeout = 100,$quiet = true)
 {
-	if (isset($GLOBALS[ "socket" ]))
+	if (isset($GLOBALS[ "sudo" ]))
 	{
 		return SudoPing($host,$timeout,$quiet);
 	}
@@ -152,24 +158,7 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 {	
 	$time = -1;
 
-   	if ($GLOBALS[ "uname" ] == "Darwin")
-	{
-		//
-		// Darwin/OSX cannot re-connect socket. Create new.
-		//
-		
-		$socket = @socket_create(AF_INET,SOCK_RAW,1);
-		
-		$timeout = 100;
-		$sec  = floor($timeout / 1000);
-		$usec = ($timeout % 1000) * 1000;
-	
-		socket_set_option($socket,SOL_SOCKET,SO_RCVTIMEO,array("sec" => $sec, "usec" => $usec));
-	}
-	else
-	{
-		$socket = $GLOBALS[ "socket" ];
-	}
+	$socket = @socket_create(AF_INET,SOCK_RAW,1);
 	
 	$sec  = floor($timeout / 1000);
 	$usec = ($timeout % 1000) * 1000;
@@ -200,14 +189,7 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 		} 
 	}
 	
-   	if ($GLOBALS[ "uname" ] == "Darwin")
-   	{
-		//
-		// Darwin/OSX cannot re-connect socket. Close old.
-		//
-		
-   		socket_close($socket);
-   	}
+   	socket_close($socket);
    	
 	return $time;
 }
@@ -386,12 +368,9 @@ function EndpointPingTask($task)
 			$best = $task[ "best" ][ $linx ];
 
 			echo "Endping: list (" . IPZero($ip) . ")\n";
-
-			$from = IP2Bin($ip);
-			$upto = $from + $maxp;
-			$ms   = -1;
 			
-			$bhit = "-";
+			$ms   = -1;
+			$bhit = "+";
 		 
 			if ($best !== false) 
 			{
@@ -400,19 +379,17 @@ function EndpointPingTask($task)
 				if ($ms == -1) $ms = UserPing($best);
 			}
 			
-			if ($ms != -1)
+			if ($ms == -1)
 			{
-				$bhit = "+";
-			}
-			else
-			{
+				$bhit   = "-";			
+				$from   = IP2Bin($ip);
+				$upto   = $from + $maxp;
 				$maxtry = $upto - $from;
+				
 				$pingip = ($best === false) ? $from : IP2Bin($best);
 				
 				while ($maxtry-- > 0)
 				{
-					//echo "Endping: list (" . IPZero($pingip) . ")\n";
-					
 					$ms = Ping(Bin2IP($pingip));
 					
 					if ($ms != -1) 
@@ -536,11 +513,12 @@ function CheckSudo(&$tasks)
 	$socket = @socket_create(AF_INET,SOCK_RAW,1);
 	
     if ($socket === false) return false;
-    	
-	$GLOBALS[ "socket" ] = $socket;
+    
+    socket_close($socket);
+    
+	$GLOBALS[ "sudo" ] = true;
 	
 	array_push($tasks,"sudoping");
-	
 	
 	return true;
 }
