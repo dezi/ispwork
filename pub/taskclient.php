@@ -378,10 +378,12 @@ function EndpointPingTask($task)
 		
 		echo "Endping: list ($todo) start...\n";
 		
-		while (count($task[ "list" ]))
+		$lcnt = count($task[ "list" ]);
+		
+		for ($linx = 0; $linx < $lcnt; $linx++)
 		{
-			$ip   = array_shift($task[ "list" ]);
-			$best = array_shift($task[ "best" ]);
+			$ip   = $task[ "list" ][ $linx ];
+			$best = $task[ "best" ][ $linx ];
 
 			echo "Endping: list (" . IPZero($ip) . ")\n";
 
@@ -405,7 +407,7 @@ function EndpointPingTask($task)
 			else
 			{
 				$maxtry = $upto - $from;
-				$pingip = ($best !== false) ? IP2Bin($best) : $from;
+				$pingip = ($best === false) ? $from : IP2Bin($best);
 				
 				while ($maxtry-- > 0)
 				{
@@ -446,7 +448,6 @@ function EndpointPingTask($task)
 	}
 
 	return $result;
-
 }
 
 function PingTask($task)
