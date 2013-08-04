@@ -47,7 +47,7 @@ function Logdat($message)
 		rename($logfile,substr($logfile,0,-4) . "." . $GLOBALS[ "logdt" ] . ".log");
 		
 		$GLOBALS[ "logfd" ] = fopen($logfile,"a");
-		$GLOBALS[ "logdt" ] = filemtime($logfile);
+		$GLOBALS[ "logdt" ] = date("Ymd",filemtime($logfile));
 		
 		chmod($logfile,0666);
 	}
