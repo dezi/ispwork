@@ -126,15 +126,18 @@ function Ping($host,$timeout = 100,$quiet = true)
 	return UserPing($host);
 }
 
-function UserPing($host)
+function UserPing($host,$timeout = 1000,$quiet = true)
 {
+	$timeout = floor($timeout / 1000);
+	if ($timeout < 0) $timeout = 1;
+	
 	if ($GLOBALS[ "uname" ] == "Darwin")
 	{
-		exec("ping -c 1 -t 1 $host",$lines,$return);
+		exec("ping -c 1 -t $timeout $host",$lines,$return);
 	}
 	else
 	{
-		exec("ping -c 1 -W 1 $host",$lines,$return);
+		exec("ping -c 1 -W $timeout $host",$lines,$return);
 	}
 	
 	if ($return == 0)
@@ -156,6 +159,8 @@ function UserPing($host)
 
 function SudoPing($host,$timeout = 100,$quiet = true) 
 {	
+	if (! isset($GLOBALS[ "sudo" ])) return -1;
+
 	$time = -1;
 
 	$socket = @socket_create(AF_INET,SOCK_RAW,1);
@@ -358,8 +363,6 @@ function EndpointPingTask($task)
 		$todo = count($task[ "list" ]);
 		$maxp = isset($task[ "maxp" ]) ? $task[ "maxp" ] : 128;
 		
-		echo "Endping: list ($todo) start...\n";
-		
 		$lcnt = count($task[ "list" ]);
 		
 		for ($linx = 0; $linx < $lcnt; $linx++)
@@ -376,7 +379,8 @@ function EndpointPingTask($task)
 			{
 				$ms = Ping($best);
 				
-				if ($ms == -1) $ms = UserPing($best);
+				if ($ms == -1) $ms = UserPing($best,1000);
+				if ($ms == -1) $ms = SudoPing($best,1000);
 			}
 			
 			if ($ms == -1)
@@ -399,6 +403,8 @@ function EndpointPingTask($task)
 					}
 					
 					if (++$pingip >= $upto) $pingip = $from;
+					
+					if (! CheckLine()) return null;
 				}
 			}
 
@@ -420,8 +426,6 @@ function EndpointPingTask($task)
 				   ;
 			}
 		}
-		
-		echo "Endping: list ($todo) done.\n";
 	}
 
 	return $result;
@@ -467,9 +471,9 @@ function PingTask($task)
 			$ms = Ping(Bin2IP($binip));
 			
 			array_push($result[ "list" ],$ms);
-		}
 
-		if (! CheckLine()) return null;
+			if (! CheckLine()) return null;
+		}
 		
 		echo "Ping: " . IPZero($from) . "/" .  $pcnt . " done...\n";
 	}
