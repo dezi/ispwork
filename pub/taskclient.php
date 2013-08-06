@@ -385,13 +385,19 @@ function CheckLine()
 {
 	if ($GLOBALS[ "pingbad" ] > 20) 
 	{
-		if (UserPing("www.google.com") == -1)
+		if ((UserPing("www.bing.com",  2000) == -1) &&
+			(UserPing("www.google.de", 2000) == -1) &&
+			(UserPing("www.google.com",2000) == -1))
 		{
 			$GLOBALS[ "linebad" ] = true;
 	
 			echo "Line: offline, aborting task...\n";
 		
 			return false;
+		}
+		else
+		{
+			echo "Line: check success...\n";
 		}
 	
 		$GLOBALS[ "pingbad" ] = 0;
