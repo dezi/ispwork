@@ -454,7 +454,7 @@ function EndpointPingTask($task)
 				{
 					echo "Endping: find " . IPZero($pingip) . "\n";
 					
-					$ms = Ping(Bin2IP($pingip));
+					$ms = Ping(Bin2IP($pingip),500);
 					
 					if ($ms != -1) 
 					{
