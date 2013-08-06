@@ -130,7 +130,7 @@ function Ping($host,$timeout = 100,$quiet = true)
 function UserPing($host,$timeout = 1000,$quiet = true)
 {
 	$timeout = floor($timeout / 1000);
-	if ($timeout < 0) $timeout = 1;
+	if ($timeout <= 0) $timeout = 1;
 	
 	if ($GLOBALS[ "uname" ] == "Darwin")
 	{
@@ -181,21 +181,38 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 
 		socket_set_option($socket,SOL_SOCKET,SO_RCVTIMEO,array("sec" => $sec, "usec" => $usec));
 		
-		if (@socket_connect($socket,$host,null) === false)
+		if (socket_connect($socket,$host,null) === false)
 		{
 			if (! $quiet) echo "Cannot resolve '$host'.\n";
 		}
 		else
 		{
-			$package = "\x08\x00\x19\x2f\x00\x00\x00\x00ping:" . $host;
-			$idntlen = 5 + strlen($host);
+			$type       = "\x08";
+			$code       = "\x00";
+			$checksum   = "\x00\x00";
+			$identifier = "\x00\x00";
+			$seqnumber  = "\x00\x00";
+			$data       = "ping:$host";
+
+			if (strlen($data) % 2) $data .= "\x00";
+			
+			$package = $type . $code . $checksum . $identifier . $seqnumber . $data;
+			
+			$bit = unpack('n*',$package);
+			$sum = array_sum($bit);
+			while ($sum >> 16) $sum = ($sum >> 16) + ($sum & 0xffff);
+			$checksum = pack('n*',~$sum);
+
+			$package = $type . $code . $checksum . $identifier . $seqnumber . $data;
+			
+			$idntlen = strlen($data);
 
 			list($start_usec,$start_sec) = explode(" ",microtime());
 			$start_time = ((float) $start_usec + (float) $start_sec);
 		
 			@socket_send($socket,$package,strlen($package),0);
 
-			if ($res = @socket_read($socket,2048)) 
+			if ($res = @socket_read($socket,255)) 
 			{
 				if (substr($res,-$idntlen) == substr($package,-$idntlen))
 				{
@@ -223,14 +240,12 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 						
 						$again = 0;
 					}
-					
-					while ($res = @socket_read($socket,2048)) usleep(1000);
 				}
 			}
 			else
 			{
 				$again = 0;
-			} 
+			}
 		}
 	
 		if (! isset($GLOBALS[ "sudosocket" ]))
@@ -238,16 +253,9 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 			socket_close($socket);
 		}
    	}
-   						
-	if ($time == -1 )
-	{
-		$GLOBALS[ "pingbad" ]++;
-	}
-	else
-	{
-		$GLOBALS[ "pingbad" ] = 0;
-	}
-	
+   			
+   	$GLOBALS[ "pingbad" ] = ($time == -1) ? $GLOBALS[ "pingbad" ] + 1 : 0;		
+
 	return $time;
 }
 
@@ -452,9 +460,7 @@ function EndpointPingTask($task)
 				
 				while ($maxtry-- > 0)
 				{
-					echo "Endping: find " . IPZero($pingip) . "\n";
-					
-					$ms = Ping(Bin2IP($pingip),500);
+					$ms = Ping(Bin2IP($pingip));
 					
 					if ($ms != -1) 
 					{
