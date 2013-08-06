@@ -225,6 +225,10 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 					
 					while ($res = @socket_read($socket,2048)) usleep(1000);
 				}
+			}
+			else
+			{
+				$again = 0;
 			} 
 		}
 	
