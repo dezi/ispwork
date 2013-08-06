@@ -611,9 +611,9 @@ function MainLoop($server_host,$server_port)
     $hello = array();
     
     $hello[ "what"    ] = "hello";
+    $hello[ "host"    ] = $GLOBALS[ "hostname" ];
     $hello[ "version" ] = "1.02";
     $hello[ "tasks"   ] = array();
-    $hello[ "host"    ] = $GLOBALS[ "hostname" ];
 	
 	//
 	// Add capabilities we have.
