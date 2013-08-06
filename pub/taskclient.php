@@ -161,7 +161,9 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 {	
 	if (! isset($GLOBALS[ "sudo" ])) return -1;
 
-	do
+	$again = 3;
+	
+	while ($again)
 	{
 		$time   = -1;
 		$again  = false;
@@ -178,15 +180,15 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 		}
 		else
 		{
-			$idntlen = 5 + strlen($host);
 			$package = "\x08\x00\x19\x2f\x00\x00\x00\x00ping:" . $host;
+			$idntlen = 5 + strlen($host);
 
 			list($start_usec,$start_sec) = explode(" ",microtime());
 			$start_time = ((float) $start_usec + (float) $start_sec);
 		
 			@socket_send($socket,$package,strlen($package),0);
 
-			if ($res = @socket_read($socket,255)) 
+			if ($res = @socket_read($socket,2048)) 
 			{
 				if (substr($res,-$idntlen) == substr($package,-$idntlen))
 				{
@@ -197,21 +199,31 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 
 					$time = floor($total_time * 1000);
 					if ($time <= 1) $time = -1;
+					
+					$again = 0;
 				}
 				else
 				{
-					echo "Ping: mismatch $host != " . $res . "...\n";
+					if (strpos($res,"ping:") > 0)
+					{
+						echo "Ping: mismatch $host != " . substr($res,strpos($res,"ping:") + 5) . "...\n";
 					
-					while ($res = @socket_read($socket,255)) usleep(1000);
+						$again--;
+					}
+					else
+					{
+						echo "Ping: unreachable $host...\n";
+						
+						$again = 0;
+					}
 					
-					$again = true;
+					while ($res = @socket_read($socket,2048)) usleep(1000);
 				}
 			} 
 		}
 	
 		socket_close($socket);
-		
-   	} while ($again);
+   	}
    	
 	return $time;
 }
