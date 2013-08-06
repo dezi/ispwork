@@ -178,8 +178,8 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 		}
 		else
 		{
-			$identty = str_pad(mt_rand(0,0x7fffffff),10,"0");
-			$package = "\x08\x00\x19\x2f\x00\x00\x00\x00ping" . $identty;
+			$idntlen = 5 + strlen($host);
+			$package = "\x08\x00\x19\x2f\x00\x00\x00\x00ping:" . $host;
 
 			list($start_usec,$start_sec) = explode(" ",microtime());
 			$start_time = ((float) $start_usec + (float) $start_sec);
@@ -188,7 +188,7 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 
 			if ($res = @socket_read($socket,255)) 
 			{
-				if (substr($res,-14) == substr($package,-14))
+				if (substr($res,-$idntlen) == substr($package,-$idntlen))
 				{
 					list($end_usec,$end_sec) = explode(" ",microtime());
 					$end_time = ((float) $end_usec + (float) $end_sec);
@@ -200,7 +200,12 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 				}
 				else
 				{
-					echo "Ping: mismatch $host...\n";
+					$parts = explode("ping:",$res);
+					
+					echo "Ping: mismatch $host != " . $parts[ 1 ] . "...\n";
+					
+					while ($res = @socket_read($socket,255)) usleep(1000);
+					
 					$again = true;
 				}
 			} 
