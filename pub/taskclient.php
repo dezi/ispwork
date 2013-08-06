@@ -200,9 +200,7 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 				}
 				else
 				{
-					$parts = explode("ping:",$res);
-					
-					echo "Ping: mismatch $host != " . $parts[ 1 ] . "...\n";
+					echo "Ping: mismatch $host != " . $res . "...\n";
 					
 					while ($res = @socket_read($socket,255)) usleep(1000);
 					
