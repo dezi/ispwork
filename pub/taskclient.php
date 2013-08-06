@@ -175,12 +175,12 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 		else
 		{
 			$socket = @socket_create(AF_INET,SOCK_RAW,1);
-	
-			$sec  = floor($timeout / 1000);
-			$usec = ($timeout % 1000) * 1000;
-
-			socket_set_option($socket,SOL_SOCKET,SO_RCVTIMEO,array("sec" => $sec, "usec" => $usec));
 		}
+	
+		$sec  = floor($timeout / 1000);
+		$usec = ($timeout % 1000) * 1000;
+
+		socket_set_option($socket,SOL_SOCKET,SO_RCVTIMEO,array("sec" => $sec, "usec" => $usec));
 		
 		if (@socket_connect($socket,$host,null) === false)
 		{
