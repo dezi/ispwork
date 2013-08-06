@@ -160,50 +160,55 @@ function UserPing($host,$timeout = 1000,$quiet = true)
 function SudoPing($host,$timeout = 100,$quiet = true) 
 {	
 	if (! isset($GLOBALS[ "sudo" ])) return -1;
-	
-	$time = -1;
-	
-	$socket = @socket_create(AF_INET,SOCK_RAW,1);
-	
-	$sec  = floor($timeout / 1000);
-	$usec = ($timeout % 1000) * 1000;
 
-	socket_set_option($socket,SOL_SOCKET,SO_RCVTIMEO,array("sec" => $sec, "usec" => $usec));
-	
-	if (@socket_connect($socket,$host,null) === false)
+	do
 	{
-		if (! $quiet) echo "Cannot resolve '$host'.\n";
-	}
-	else
-	{
-		$identty = str_pad(mt_rand(0,0x7fffffff),10,"0");
-		$package = "\x08\x00\x19\x2f\x00\x00\x00\x00ping" . $identty;
+		$time   = -1;
+		$again  = false;
+		$socket = @socket_create(AF_INET,SOCK_RAW,1);
+	
+		$sec  = floor($timeout / 1000);
+		$usec = ($timeout % 1000) * 1000;
 
-		list($start_usec,$start_sec) = explode(" ",microtime());
-		$start_time = ((float) $start_usec + (float) $start_sec);
-		
-		@socket_send($socket,$package,strlen($package),0);
-
-		if ($res = @socket_read($socket,255)) 
+		socket_set_option($socket,SOL_SOCKET,SO_RCVTIMEO,array("sec" => $sec, "usec" => $usec));
+	
+		if (@socket_connect($socket,$host,null) === false)
 		{
-			if (substr($res,-14) == substr($package,-14))
-			{
-				list($end_usec,$end_sec) = explode(" ",microtime());
-				$end_time = ((float) $end_usec + (float) $end_sec);
+			if (! $quiet) echo "Cannot resolve '$host'.\n";
+		}
+		else
+		{
+			$identty = str_pad(mt_rand(0,0x7fffffff),10,"0");
+			$package = "\x08\x00\x19\x2f\x00\x00\x00\x00ping" . $identty;
 
-				$total_time = $end_time - $start_time;
+			list($start_usec,$start_sec) = explode(" ",microtime());
+			$start_time = ((float) $start_usec + (float) $start_sec);
+		
+			@socket_send($socket,$package,strlen($package),0);
 
-				$time = floor($total_time * 1000);
-				if ($time <= 1) $time = -1;
-			}
-			else
+			if ($res = @socket_read($socket,255)) 
 			{
-				echo "Ping: mismatch...\n"; 
-			}
-		} 
-	}
+				if (substr($res,-14) == substr($package,-14))
+				{
+					list($end_usec,$end_sec) = explode(" ",microtime());
+					$end_time = ((float) $end_usec + (float) $end_sec);
+
+					$total_time = $end_time - $start_time;
+
+					$time = floor($total_time * 1000);
+					if ($time <= 1) $time = -1;
+				}
+				else
+				{
+					echo "Ping: mismatch $host...\n";
+					$again = true;
+				}
+			} 
+		}
 	
-   	socket_close($socket);
+		socket_close($socket);
+		
+   	} while ($again);
    	
 	return $time;
 }
