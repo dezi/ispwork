@@ -161,13 +161,11 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 {	
 	if (! isset($GLOBALS[ "sudo" ])) return -1;
 
-	$again = 3;
+	$time  = -1;
+	$again =  3;
 	
 	while ($again > 0)
 	{
-		$time   = -1;
-		$again  = false;
-		
 		if (isset($GLOBALS[ "sudosocket" ]))
 		{
 			$socket = $GLOBALS[ "sudosocket" ];
