@@ -163,17 +163,25 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 
 	$again = 3;
 	
-	while ($again)
+	while ($again > 0)
 	{
 		$time   = -1;
 		$again  = false;
-		$socket = @socket_create(AF_INET,SOCK_RAW,1);
+		
+		if (isset($GLOBALS[ "sudosocket" ]))
+		{
+			$socket = $GLOBALS[ "sudosocket" ];
+		}
+		else
+		{
+			$socket = @socket_create(AF_INET,SOCK_RAW,1);
 	
-		$sec  = floor($timeout / 1000);
-		$usec = ($timeout % 1000) * 1000;
+			$sec  = floor($timeout / 1000);
+			$usec = ($timeout % 1000) * 1000;
 
-		socket_set_option($socket,SOL_SOCKET,SO_RCVTIMEO,array("sec" => $sec, "usec" => $usec));
-	
+			socket_set_option($socket,SOL_SOCKET,SO_RCVTIMEO,array("sec" => $sec, "usec" => $usec));
+		}
+		
 		if (@socket_connect($socket,$host,null) === false)
 		{
 			if (! $quiet) echo "Cannot resolve '$host'.\n";
@@ -206,7 +214,7 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 				{
 					if (strpos($res,"ping:") > 0)
 					{
-						echo "Ping: mismatch $host != " . substr($res,strpos($res,"ping:") + 5) . "...\n";
+						echo "Ping: $host != " . substr($res,strpos($res,"ping:") + 5) . "...\n";
 					
 						$again--;
 					}
@@ -222,7 +230,10 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 			} 
 		}
 	
-		socket_close($socket);
+		if (! isset($GLOBALS[ "sudosocket" ]))
+		{
+			socket_close($socket);
+		}
    	}
    	
 	return $time;
@@ -547,7 +558,22 @@ function CheckSudo(&$tasks)
 	
     if ($socket === false) return false;
     
-    socket_close($socket);
+    if ($GLOBALS[ "uname" ] == "Darwin")
+    {
+    	//
+    	// Darwin cannot re-use socket.
+    	//
+    	
+    	socket_close($socket);
+    }
+    else
+    {
+    	//
+    	// Store socket for further use.
+    	//
+    	
+    	$GLOBALS[ "sudosocket" ] = $socket;
+    }
     
 	$GLOBALS[ "sudo" ] = true;
 	
