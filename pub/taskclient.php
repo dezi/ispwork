@@ -1,6 +1,7 @@
 <?php
 
-$GLOBALS[ "uname" ] = trim(`uname`);
+$GLOBALS[ "uname"    ] = trim(`uname`);
+$GLOBALS[ "hostname" ] = trim(`hostname`);
 
 $GLOBALS[ "server_host" ] = "xberry.org";
 $GLOBALS[ "server_port" ] = 11042;
@@ -603,12 +604,6 @@ function CheckSudo(&$tasks)
 
 function MainLoop($server_host,$server_port)
 {
-	//
-	// Open a generic UPD socket.
-	//
-	
-	$socket = socket_create(AF_INET,SOCK_DGRAM,SOL_UDP);
-    
     //
     // Prepare a hello message with our capabilities.
     //
@@ -618,6 +613,7 @@ function MainLoop($server_host,$server_port)
     $hello[ "what"    ] = "hello";
     $hello[ "version" ] = "1.02";
     $hello[ "tasks"   ] = array();
+    $hello[ "host"    ] = $GLOBALS[ "hostname" ];
 	
 	//
 	// Add capabilities we have.
@@ -629,6 +625,12 @@ function MainLoop($server_host,$server_port)
 
 	$hellopacket = EncodeMessage($hello);
 	$sorrysleep  = 2;
+	
+	//
+	// Open a generic UPD socket.
+	//
+	
+	$socket = socket_create(AF_INET,SOCK_DGRAM,SOL_UDP);
 	
     while (true)
     {
