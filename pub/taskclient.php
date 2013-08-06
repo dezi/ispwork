@@ -233,7 +233,16 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 			socket_close($socket);
 		}
    	}
-   	
+   						
+	if ($time == -1 )
+	{
+		$GLOBALS[ "pingbad" ]++;
+	}
+	else
+	{
+		$GLOBALS[ "pingbad" ] = 0;
+	}
+	
 	return $time;
 }
 
@@ -370,9 +379,9 @@ function MtrTask($task)
 
 function CheckLine()
 {
-	if ($GLOBALS[ "pingbad" ] > 5) 
+	if ($GLOBALS[ "pingbad" ] > 20) 
 	{
-		if (Ping("www.google.com") == -1)
+		if (UserPing("www.google.com") == -1)
 		{
 			$GLOBALS[ "linebad" ] = true;
 	
@@ -408,7 +417,7 @@ function EndpointPingTask($task)
 			$ip   = $task[ "list" ][ $linx ];
 			$best = $task[ "best" ][ $linx ];
 
-			echo "Endping: list (" . IPZero($ip) . ")\n";
+			echo "Endping: list " . IPZero($ip) . "\n";
 			
 			$ms   = -1;
 			$bhit = "+";
@@ -432,6 +441,8 @@ function EndpointPingTask($task)
 				
 				while ($maxtry-- > 0)
 				{
+					echo "Endping: find " . IPZero($pingip) . "\n";
+					
 					$ms = Ping(Bin2IP($pingip));
 					
 					if ($ms != -1) 
@@ -451,16 +462,16 @@ function EndpointPingTask($task)
 			
 			if ($best !== false)
 			{
-				echo "Endping: list (" 
+				echo "Endping: list " 
 				   . IPZero($best) 
-				   . "$bhit) = $ms\n"
+				   . "$bhit = $ms\n"
 				   ;
 			}
 			else
 			{
-				echo "Endping: list (" 
+				echo "Endping: list " 
 				   . IPZero($ip) 
-				   . "$bhit) = $ms\n"
+				   . "$bhit = $ms\n"
 				   ;
 			}
 		}
