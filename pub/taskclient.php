@@ -530,12 +530,23 @@ function EndpointPingTask($task)
 	{
 		$gate = $task[ "gate" ];
 		
-		$ms = Ping(IP($gate),500);
+		$ms  = -1;
+		$ms1 = "n.a.";
+		$ms2 = "n.a.";
+		$ms3 = "n.a.";
 		
-		if ($ms == -1) $ms = SudoPing(IP($gate),1000);
-		if ($ms == -1) $ms = UserPing(IP($gate),1000);
+		if ($ms == -1) $ms = $ms1 = Ping(IP($gate),500);
+		if ($ms == -1) $ms = $ms2 = SudoPing(IP($gate),1000);
+		if ($ms == -1) $ms = $ms3 = UserPing(IP($gate),2000);
 		
-		echo "Endping: gate " . $gate . " = $ms\n";
+		if ($ms == -1)
+		{
+			echo "Endping: gate failed " . $gate . " = $ms1 $ms2 $ms3\n";
+		}
+		else
+		{
+			echo "Endping: gate " . $gate . " = $ms\n";
+		}
 		
 		$result[ "gate" ] = $ms;
 	}
