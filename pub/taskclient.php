@@ -417,6 +417,36 @@ function CheckLine()
 	return true;
 }
 
+function UplinksPingTask($task)
+{
+	$result = array();
+	
+	$result[ "what" ] = $task[ "what" ];
+	$result[ "guid" ] = $task[ "guid" ];
+	$result[ "list" ] = array();
+	
+	if (isset($task[ "list" ]))
+	{
+		$lcnt = count($task[ "list" ]);
+		
+		for ($linx = 0; $linx < $lcnt; $linx++)
+		{
+			$ip = $task[ "list" ][ $linx ];
+			
+			$ms = Ping(IP($ip),100);
+				
+			//if ($ms == -1) $ms = SudoPing(IP($ip),1000);
+			//if ($ms == -1) $ms = UserPing(IP($ip),1000);
+			
+			echo "Uplping: list " . IPZero($ip) . " = $ms\n";
+			
+			array_push($result[ "list" ],$ms);
+		}
+	}
+	
+	return $result;
+}
+
 function EndpointPingTask($task)
 {
 	$result = array();
@@ -586,6 +616,7 @@ function CheckPing(&$tasks)
 	
 	array_push($tasks,"ping");
 	array_push($tasks,"endping");
+	array_push($tasks,"uplping");
 
 	return true;
 }
@@ -634,7 +665,7 @@ function MainLoop($server_host,$server_port)
     
     $hello[ "what"    ] = "hello";
     $hello[ "host"    ] = $GLOBALS[ "hostname" ];
-    $hello[ "version" ] = "1.03";
+    $hello[ "version" ] = "1.04";
     $hello[ "tasks"   ] = array();
 	
 	//
@@ -738,6 +769,15 @@ function MainLoop($server_host,$server_port)
         	
         	case "endping" :
         		$result = EndpointPingTask($task);
+        		$sorrysleep = 2;
+        		break;
+        	        	
+        	//
+        	// Uplinks ping task.
+        	//
+        	
+        	case "uplping" :
+        		$result = UplinksPingTask($task);
         		$sorrysleep = 2;
         		break;
         	        	
