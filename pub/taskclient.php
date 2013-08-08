@@ -433,10 +433,10 @@ function UplinksPingTask($task)
 		{
 			$ip = $task[ "list" ][ $linx ];
 			
-			$ms = Ping(IP($ip),100);
+			$ms = Ping(IP($ip),500);
 				
-			//if ($ms == -1) $ms = SudoPing(IP($ip),1000);
-			//if ($ms == -1) $ms = UserPing(IP($ip),1000);
+			if ($ms == -1) $ms = SudoPing(IP($ip),1000);
+			if ($ms == -1) $ms = UserPing(IP($ip),1000);
 			
 			echo "Uplping: list " . IPZero($ip) . " = $ms\n";
 			
