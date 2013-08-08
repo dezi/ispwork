@@ -503,7 +503,7 @@ function EndpointPingTask($task)
 		if ($ms == -1) $ms = SudoPing(IP($gate),1000);
 		if ($ms == -1) $ms = UserPing(IP($gate),1000);
 		
-		echo "Endping: gate " . IPZero($gate) . " = $ms\n";
+		echo "Endping: gate " . $gate . " = $ms\n";
 		
 		$result[ "gate" ] = $ms;
 	}
