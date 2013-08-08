@@ -493,7 +493,21 @@ function EndpointPingTask($task)
 			}
 		}
 	}
-
+	
+	if (isset($task[ "gate" ]))
+	{
+		$gate = $task[ "gate" ];
+		
+		$ms = Ping(IP($gate));
+		
+		if ($ms == -1) $ms = SudoPing(IP($gate),1000);
+		if ($ms == -1) $ms = UserPing(IP($gate),1000);
+		
+		echo "Endping: gate " . IPZero($gate) . " = $ms\n";
+		
+		$result[ "gate" ] = $ms;
+	}
+	
 	return $result;
 }
 
@@ -618,7 +632,7 @@ function MainLoop($server_host,$server_port)
     
     $hello[ "what"    ] = "hello";
     $hello[ "host"    ] = $GLOBALS[ "hostname" ];
-    $hello[ "version" ] = "1.02";
+    $hello[ "version" ] = "1.03";
     $hello[ "tasks"   ] = array();
 	
 	//
