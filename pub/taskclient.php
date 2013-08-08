@@ -432,13 +432,24 @@ function UplinksPingTask($task)
 		for ($linx = 0; $linx < $lcnt; $linx++)
 		{
 			$ip = $task[ "list" ][ $linx ];
-			
-			$ms = Ping(IP($ip),500);
-				
-			if ($ms == -1) $ms = SudoPing(IP($ip),1000);
-			if ($ms == -1) $ms = UserPing(IP($ip),1000);
-			
-			echo "Uplping: list " . IPZero($ip) . " = $ms\n";
+
+			$ms  = -1;
+			$ms1 = "n.a.";
+			$ms2 = "n.a.";
+			$ms3 = "n.a.";
+		
+			if ($ms == -1) $ms = $ms1 = Ping(IP($ip),500);
+			if ($ms == -1) $ms = $ms2 = SudoPing(IP($ip),1000);
+			if ($ms == -1) $ms = $ms3 = UserPing(IP($ip),2000);
+		
+			if ($ms == -1)
+			{
+				echo "Uplping: list failed " . IPZero($ip) . " = $ms1 $ms2 $ms3\n";
+			}
+			else
+			{
+				echo "Uplping: list " . IPZero($ip) . " = $ms\n";
+			}
 			
 			array_push($result[ "list" ],$ms);
 		}
