@@ -500,7 +500,7 @@ function EndpointPingTask($task)
 	{
 		$gate = $task[ "gate" ];
 		
-		$ms = Ping(IP($gate));
+		$ms = Ping(IP($gate),500);
 		
 		if ($ms == -1) $ms = SudoPing(IP($gate),1000);
 		if ($ms == -1) $ms = UserPing(IP($gate),1000);
