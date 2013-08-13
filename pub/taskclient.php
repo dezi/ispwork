@@ -190,8 +190,8 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 			$type       = "\x08";
 			$code       = "\x00";
 			$checksum   = "\x00\x00";
-			$identifier = "\x00\x00";
-			$seqnumber  = "\x00\x00";
+			$identifier = chr(mt_rand(0,255)) . chr(mt_rand(0,255));
+			$seqnumber  = chr(mt_rand(0,255)) . chr(mt_rand(0,255));
 			$data       = "ping:$host";
 
 			if (strlen($data) % 2) $data .= "\x00";
@@ -214,7 +214,12 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 
 			if ($res = @socket_read($socket,255)) 
 			{
-				if (substr($res,-$idntlen) == substr($package,-$idntlen))
+				$pingidentifier = $res[ 4 ] . $res[ 5 ];
+				$pingseqnumber  = $res[ 6 ] . $res[ 7 ];
+				
+				//if (substr($res,-$idntlen) == substr($package,-$idntlen))
+				
+				if (($pingidentifier == $identifier) && ($pingseqnumber == $seqnumber))
 				{
 					list($end_usec,$end_sec) = explode(" ",microtime());
 					$end_time = ((float) $end_usec + (float) $end_sec);
