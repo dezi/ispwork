@@ -214,11 +214,12 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 
 			if ($res = @socket_read($socket,255)) 
 			{
-				$pingidentifier = $res[ 4 ] . $res[ 5 ];
-				$pingseqnumber  = $res[ 6 ] . $res[ 7 ];
+                $offset = strlen($res) - strlen($package);
+                $pingidentifier = $res[ $offset + 4 ] . $res[ $offset + 5 ];
+                $pingseqnumber  = $res[ $offset + 6 ] . $res[ $offset + 7 ];
 				
 				//if (substr($res,-$idntlen) == substr($package,-$idntlen))
-				
+	
 				if (($pingidentifier == $identifier) && ($pingseqnumber == $seqnumber))
 				{
 					list($end_usec,$end_sec) = explode(" ",microtime());
@@ -713,8 +714,10 @@ function CheckSudo(&$tasks)
     	//
     	// Store socket for further use.
     	//
-    	
-    	$GLOBALS[ "sudosocket" ] = $socket;
+        
+        socket_close($socket);
+	
+    	//$GLOBALS[ "sudosocket" ] = $socket;
     }
     
 	$GLOBALS[ "sudo" ] = true;
