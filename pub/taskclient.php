@@ -817,7 +817,7 @@ function MainLoop($server_host,$server_port)
         	//
         		
          	default :
-         		echo "Unknown task => " . $task[ "task" ] . "\n";
+         		echo "Unknown task => " . $task[ "what" ] . "\n";
         		sleep(60);
 				break;
 		}
