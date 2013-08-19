@@ -901,7 +901,8 @@ function MainLoop($server_host,$server_port)
         	
         	$message = EncodeMessage($result);
    	 		socket_sendto($socket,$message,strlen($message),0,$server_host,$server_port);
-   	 	}
+         	sleep(1);
+  	 	}
 	}
 }
 
