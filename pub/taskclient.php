@@ -784,7 +784,23 @@ function MainLoop($server_host,$server_port)
 			echo "No response...\n";
 			
         	sleep($sorrysleep);
-        	if ($sorrysleep < 64) $sorrysleep += 2;
+        	
+        	if ($sorrysleep >= 64) 
+        	{
+        		//
+        		// Re-open another socket.
+        		//
+        		
+        		socket_close($socket);
+				
+				$socket = socket_create(AF_INET,SOCK_DGRAM,SOL_UDP);
+				
+				$sorrysleep = 2;
+        	}
+        	else
+        	{
+        		$sorrysleep += 2;
+        	}
         	
 			continue;
 		}
