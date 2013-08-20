@@ -423,6 +423,47 @@ function CheckLine()
 	return true;
 }
 
+function BblinksPingTask($task)
+{
+	$result = array();
+	
+	$result[ "what" ] = $task[ "what" ];
+	$result[ "guid" ] = $task[ "guid" ];
+	$result[ "list" ] = array();
+	
+	if (isset($task[ "list" ]))
+	{
+		$lcnt = count($task[ "list" ]);
+		
+		for ($linx = 0; $linx < $lcnt; $linx++)
+		{
+			$ip = $task[ "list" ][ $linx ];
+
+			$ms  = -1;
+			$ms1 = "n.a.";
+			$ms2 = "n.a.";
+			$ms3 = "n.a.";
+		
+			if ($ms == -1) $ms = $ms1 = Ping(IP($ip),500);
+			if ($ms == -1) $ms = $ms2 = SudoPing(IP($ip),1000);
+			if ($ms == -1) $ms = $ms3 = UserPing(IP($ip),2000);
+		
+			if ($ms == -1)
+			{
+				echo "Bblping: list failed " . IPZero($ip) . " = $ms1 $ms2 $ms3\n";
+			}
+			else
+			{
+				echo "Bblping: list " . IPZero($ip) . " = $ms\n";
+			}
+			
+			array_push($result[ "list" ],$ms);
+		}
+	}
+	
+	return $result;
+}
+
 function UplinksPingTask($task)
 {
 	$result = array();
@@ -685,6 +726,7 @@ function CheckPing(&$tasks)
 	
 	array_push($tasks,"ping");
 	array_push($tasks,"endping");
+	array_push($tasks,"bblping");
 	array_push($tasks,"uplping");
 	array_push($tasks,"eplping");
 
@@ -864,6 +906,11 @@ function MainLoop($server_host,$server_port)
         	// Uplinks ping task.
         	//
         	
+        	case "bblping" :
+        		$result = BblinksPingTask($task);
+        		$sorrysleep = 2;
+        		break;
+        	        	
         	case "uplping" :
         		$result = UplinksPingTask($task);
         		$sorrysleep = 2;
