@@ -423,6 +423,55 @@ function CheckLine()
 	return true;
 }
 
+function MtrPingTask($task,$ip,$mtrs)
+{
+	$ms = -1;
+	
+	$mtrs = explode(",",$mtrs);
+	
+	foreach ($mtrs as $mtrdom)
+	{
+		$mtr = "mtr -c 1 -r --no-dns " . $mtrdom;
+	
+		$pfd = popen($mtr,"r");
+
+		$hops = Array();
+	
+		while (($line = fgets($pfd)) != null)
+		{
+			if (substr($line,0,5) == "HOST:") continue;
+		
+			$line = trim($line);
+			
+			$line = str_replace("       "," ",$line);
+			$line = str_replace("      "," ",$line);
+			$line = str_replace("     "," ",$line);
+			$line = str_replace("    "," ",$line);
+			$line = str_replace("   "," ",$line);
+			$line = str_replace("  "," ",$line);
+			
+			$hop = explode(" ",$line);
+			
+			$hopip = IPZero($hop[ 1 ]);
+			
+			if ($hopip == $ip)
+			{
+				$ms = floor(floatval($hop[ 4 ]));
+				
+				echo $task[ "what" ] . ": mtrpng " . IPZero($ip) . " = $ms ($mtrdom)\n";
+
+				break;
+			}
+		}
+		
+		pclose($pfd);
+		
+		if ($ms != -1) break;
+	}
+	
+	return $ms;
+}
+
 function AnyPingTask($task)
 {
 	$what = $task[ "what" ];
@@ -452,18 +501,20 @@ function AnyPingTask($task)
 			
 			if (($ms == -1) && isset($task[ "pmtr" ]) && isset($task[ "pmtr" ][ $ip ]))
 			{
-				$pmtrs = $task[ "pmtr" ][ $ip ];
+				$ms = MtrPingTask($task,$ip,$task[ "pmtr" ][ $ip ]);
 				
-				echo $task[ "what" ] . ": mtrpng " . IPZero($ip) . " = $pmtrs\n";
-			}
-			
-			if ($ms == -1)
-			{
-				echo $task[ "what" ] . ": failed " . IPZero($ip) . " = $ms1 $ms2 $ms3\n";
+				echo $task[ "what" ] . ": mtrpng " . IPZero($ip) . " = $ms\n";
 			}
 			else
 			{
-				echo $task[ "what" ] . ": pinged " . IPZero($ip) . " = $ms\n";
+				if ($ms == -1)
+				{
+					echo $task[ "what" ] . ": failed " . IPZero($ip) . " = $ms1 $ms2 $ms3\n";
+				}
+				else
+				{
+					echo $task[ "what" ] . ": pinged " . IPZero($ip) . " = $ms\n";
+				}
 			}
 			
 			array_push($result[ "list" ],$ms);
