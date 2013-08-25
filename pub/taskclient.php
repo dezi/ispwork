@@ -452,7 +452,7 @@ function AnyPingTask($task)
 			
 			if (($ms == -1) && isset($task[ "pmtr" ]) && isset($task[ "pmtr" ][ $ip ]))
 			{
-				$pmtrs = isset($task[ "pmtr" ][ $ip ];
+				$pmtrs = $task[ "pmtr" ][ $ip ];
 				
 				echo $task[ "what" ] . ": mtrpng " . IPZero($ip) . " = $pmtrs\n";
 			}
