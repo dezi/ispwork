@@ -398,9 +398,9 @@ function MtrTask($task)
 	return $result;
 }
 
-function CheckLine()
+function CheckLine($force = false)
 {
-	if ($GLOBALS[ "pingbad" ] > 20) 
+	if (($GLOBALS[ "pingbad" ] > 20) || $force)
 	{
 		if ((UserPing("www.bing.com",  2000) == -1) &&
 			(UserPing("www.google.de", 2000) == -1) &&
@@ -423,7 +423,7 @@ function CheckLine()
 	return true;
 }
 
-function MtrPingTask($task,$ip,$mtrs)
+function MtrPingJob($task,$ip,$mtrs)
 {
 	if (strlen($mtrs) == 0) return -1;
 
@@ -464,6 +464,8 @@ function MtrPingTask($task,$ip,$mtrs)
 
 				break;
 			}
+			
+			echo $task[ "what" ] . ": mtrpng " . IPZero($ip) . " = -1 ($mtrdom)\n";
 		}
 		
 		pclose($pfd);
@@ -503,7 +505,7 @@ function AnyPingTask($task)
 			
 			if (($ms == -1) && isset($task[ "pmtr" ]) && isset($task[ "pmtr" ][ $ip ]))
 			{
-				$ms = MtrPingTask($task,$ip,$task[ "pmtr" ][ $ip ]);
+				$ms = MtrPingJob($task,$ip,$task[ "pmtr" ][ $ip ]);
 				
 				echo $task[ "what" ] . ": mtrpng " . IPZero($ip) . " = $ms\n";
 			}
