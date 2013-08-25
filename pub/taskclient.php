@@ -425,6 +425,8 @@ function CheckLine()
 
 function MtrPingTask($task,$ip,$mtrs)
 {
+	if (strlen($mtrs) == 0) return -1;
+
 	$ms = -1;
 	
 	$mtrs = explode(",",$mtrs);
