@@ -423,6 +423,20 @@ function CheckLine($force = false)
 	return true;
 }
 
+function CheckTask($task)
+{
+	if (! isset($task[ "test" ])) return true;
+	
+	foreach ($task[ "test" ] as $test)
+	{
+		if (UserPing($test,1000) != -1) return true;
+	}
+	
+	echo "Test: offline, aborting task...\n";
+	
+	return false;
+}
+
 function MtrPingJob($task,$ip,$mtrs)
 {
 	if (strlen($mtrs) == 0) return -1;
@@ -478,16 +492,17 @@ function MtrPingJob($task,$ip,$mtrs)
 
 function AnyPingTask($task)
 {
-	$what = $task[ "what" ];
-	
+	if (! CheckTask($task)) return null;
+
 	$result = array();
 	
 	$result[ "what" ] = $task[ "what" ];
 	$result[ "guid" ] = $task[ "guid" ];
 	$result[ "list" ] = array();
-	
+			
 	if (isset($task[ "list" ]))
 	{
+		$what = $task[ "what" ];	
 		$lcnt = count($task[ "list" ]);
 		
 		for ($linx = 0; $linx < $lcnt; $linx++)
@@ -507,17 +522,17 @@ function AnyPingTask($task)
 			{
 				$ms = MtrPingJob($task,$ip,$task[ "pmtr" ][ $ip ]);
 				
-				echo $task[ "what" ] . ": mtrpng " . IPZero($ip) . " = $ms\n";
+				echo "$what: mtrpng " . IPZero($ip) . " = $ms\n";
 			}
 			else
 			{
 				if ($ms == -1)
 				{
-					echo $task[ "what" ] . ": failed " . IPZero($ip) . " = $ms1 $ms2 $ms3\n";
+					echo "$what: failed " . IPZero($ip) . " = $ms1 $ms2 $ms3\n";
 				}
 				else
 				{
-					echo $task[ "what" ] . ": pinged " . IPZero($ip) . " = $ms\n";
+					echo "$what: pinged " . IPZero($ip) . " = $ms\n";
 				}
 			}
 			
@@ -525,134 +540,15 @@ function AnyPingTask($task)
 		}
 	}
 	
-	return $result;
-}
-
-function BblinksPingTask($task)
-{
-	$result = array();
-	
-	$result[ "what" ] = $task[ "what" ];
-	$result[ "guid" ] = $task[ "guid" ];
-	$result[ "list" ] = array();
-	
-	if (isset($task[ "list" ]))
-	{
-		$lcnt = count($task[ "list" ]);
-		
-		for ($linx = 0; $linx < $lcnt; $linx++)
-		{
-			$ip = $task[ "list" ][ $linx ];
-
-			$ms  = -1;
-			$ms1 = "n.a.";
-			$ms2 = "n.a.";
-			$ms3 = "n.a.";
-		
-			if ($ms == -1) $ms = $ms1 = Ping(IP($ip),500);
-			if ($ms == -1) $ms = $ms2 = SudoPing(IP($ip),1000);
-			if ($ms == -1) $ms = $ms3 = UserPing(IP($ip),2000);
-		
-			if ($ms == -1)
-			{
-				echo "Bblping: list failed " . IPZero($ip) . " = $ms1 $ms2 $ms3\n";
-			}
-			else
-			{
-				echo "Bblping: list " . IPZero($ip) . " = $ms\n";
-			}
-			
-			array_push($result[ "list" ],$ms);
-		}
-	}
+	if (! CheckTask($task)) return null;
 	
 	return $result;
 }
 
-function UplinksPingTask($task)
+function EndPingTask($task)
 {
-	$result = array();
+	if (! CheckTask($task)) return null;
 	
-	$result[ "what" ] = $task[ "what" ];
-	$result[ "guid" ] = $task[ "guid" ];
-	$result[ "list" ] = array();
-	
-	if (isset($task[ "list" ]))
-	{
-		$lcnt = count($task[ "list" ]);
-		
-		for ($linx = 0; $linx < $lcnt; $linx++)
-		{
-			$ip = $task[ "list" ][ $linx ];
-
-			$ms  = -1;
-			$ms1 = "n.a.";
-			$ms2 = "n.a.";
-			$ms3 = "n.a.";
-		
-			if ($ms == -1) $ms = $ms1 = Ping(IP($ip),500);
-			if ($ms == -1) $ms = $ms2 = SudoPing(IP($ip),1000);
-			if ($ms == -1) $ms = $ms3 = UserPing(IP($ip),2000);
-		
-			if ($ms == -1)
-			{
-				echo "Uplping: list failed " . IPZero($ip) . " = $ms1 $ms2 $ms3\n";
-			}
-			else
-			{
-				echo "Uplping: list " . IPZero($ip) . " = $ms\n";
-			}
-			
-			array_push($result[ "list" ],$ms);
-		}
-	}
-	
-	return $result;
-}
-
-function EplinksPingTask($task)
-{
-	$result = array();
-	
-	$result[ "what" ] = $task[ "what" ];
-	$result[ "guid" ] = $task[ "guid" ];
-	$result[ "list" ] = array();
-	
-	if (isset($task[ "list" ]))
-	{
-		$lcnt = count($task[ "list" ]);
-		
-		for ($linx = 0; $linx < $lcnt; $linx++)
-		{
-			$ip = $task[ "list" ][ $linx ];
-
-			$ms  = -1;
-			$ms1 = "n.a.";
-			$ms2 = "n.a.";
-			$ms3 = "n.a.";
-		
-			if ($ms == -1) $ms = $ms1 = Ping(IP($ip),500);
-			if ($ms == -1) $ms = $ms2 = SudoPing(IP($ip),1000);
-			if ($ms == -1) $ms = $ms3 = UserPing(IP($ip),2000);
-		
-			if ($ms == -1)
-			{
-				echo "Eplping: list failed " . IPZero($ip) . " = $ms1 $ms2 $ms3\n";
-			}
-			else
-			{
-				echo "Eplping: list " . IPZero($ip) . " = $ms\n";
-			}
-			
-			array_push($result[ "list" ],$ms);
-		}
-	}
-	
-	return $result;
-}
-
-function EndpointPingTask($task)
-{
 	$result = array();
 	
 	$result[ "what" ] = $task[ "what" ];
@@ -672,7 +568,7 @@ function EndpointPingTask($task)
 			$ip   = $task[ "list" ][ $linx ];
 			$best = $task[ "best" ][ $linx ];
 
-			echo "Endping: list " . IPZero($ip) . "\n";
+			echo "endping: " . IPZero($ip) . "\n";
 			
 			$ms   = -1;
 			$bhit = "+";
@@ -715,14 +611,14 @@ function EndpointPingTask($task)
 			
 			if ($best !== false)
 			{
-				echo "Endping: list " 
+				echo "endping: " 
 				   . IPZero($best) 
 				   . "$bhit = $ms\n"
 				   ;
 			}
 			else
 			{
-				echo "Endping: list " 
+				echo "endping: " 
 				   . IPZero($ip) 
 				   . "$bhit = $ms\n"
 				   ;
@@ -730,36 +626,15 @@ function EndpointPingTask($task)
 		}
 	}
 	
-	if (isset($task[ "gate" ]))
-	{
-		$gate = $task[ "gate" ];
-		
-		$ms  = -1;
-		$ms1 = "n.a.";
-		$ms2 = "n.a.";
-		$ms3 = "n.a.";
-		
-		if ($ms == -1) $ms = $ms1 = Ping(IP($gate),500);
-		if ($ms == -1) $ms = $ms2 = SudoPing(IP($gate),1000);
-		if ($ms == -1) $ms = $ms3 = UserPing(IP($gate),2000);
-		
-		if ($ms == -1)
-		{
-			echo "Endping: gate failed " . $gate . " = $ms1 $ms2 $ms3\n";
-		}
-		else
-		{
-			echo "Endping: gate " . $gate . " = $ms\n";
-		}
-		
-		$result[ "gate" ] = $ms;
-	}
+	if (! CheckTask($task)) return null;
 	
 	return $result;
 }
 
-function PingTask($task)
+function NetPingTask($task)
 {
+	if (! CheckTask($task)) return null;
+
 	$result = array();
 	
 	$result[ "what" ] = $task[ "what" ];
@@ -770,19 +645,15 @@ function PingTask($task)
 	{
 		$todo = count($task[ "list" ]);
 		
-		echo "Ping: list ($todo) start...\n";
-		
 		foreach ($task[ "list" ] as $ip)
 		{
 			$ms = Ping($ip);
 			array_push($result[ "list" ],$ms);
 			
-			echo "Ping: " . IPZero($ip) . " => $ms\n";
+			echo "netping: " . IPZero($ip) . " => $ms\n";
 
 			if (! CheckLine()) return null;
 		}
-		
-		echo "Ping: list ($todo) done.\n";
 	}
 	
 	if (isset($task[ "from" ]) && isset($task[ "upto" ]))
@@ -791,7 +662,7 @@ function PingTask($task)
 		$upto = IP2Bin($task[ "upto" ]);
 		$pcnt = $upto - $from;
 		
-		echo "Ping: " . IPZero($from) . "/" . $pcnt . " start...\n";
+		echo "netping: " . IPZero($from) . "/" . $pcnt . " start...\n";
 		
 		for ($binip = $from; $binip <= $upto; $binip++)
 		{
@@ -802,9 +673,11 @@ function PingTask($task)
 			if (! CheckLine()) return null;
 		}
 		
-		echo "Ping: " . IPZero($from) . "/" .  $pcnt . " done...\n";
+		echo "netping: " . IPZero($from) . "/" .  $pcnt . " done...\n";
 	}
 	
+	if (! CheckTask($task)) return null;
+
 	return $result;
 }
 
@@ -831,6 +704,7 @@ function CheckPing(&$tasks)
 	
 	array_push($tasks,"ping");
 	
+	array_push($tasks,"netping");
 	array_push($tasks,"endping");
 	array_push($tasks,"bblping");
 	array_push($tasks,"uplping");
@@ -992,46 +866,15 @@ function MainLoop($server_host,$server_port)
 				break;
         	
         	//
-        	// Ping task.
+        	// Ping tasks.
         	//
         	
-        	case "ping" :
-        		$result = PingTask($task);
-        		$sorrysleep = 2;
-        		break;
-        	        	
-        	//
-        	// Endpoint ping task.
-        	//
-        	
-        	case "endping" :
-        		$result = EndpointPingTask($task);
-        		$sorrysleep = 2;
-        		break;
-        	        	
-        	//
-        	// Uplinks ping task.
-        	//
-        	
-        	case "gwyping" :
-        		$result = AnyPingTask($task);
-        		$sorrysleep = 2;
-        		break;
-        	        	
-        	case "bblping" :
-        		$result = BblinksPingTask($task);
-        		$sorrysleep = 2;
-        		break;
-        	        	
-        	case "uplping" :
-        		$result = UplinksPingTask($task);
-        		$sorrysleep = 2;
-        		break;
-        	        	
-        	case "eplping" :
-        		$result = EplinksPingTask($task);
-        		$sorrysleep = 2;
-        		break;
+        	case "netping" : $result = NetPingTask($task); $sorrysleep = 2; break;
+        	case "endping" : $result = EndPingTask($task); $sorrysleep = 2; break;
+        	case "eplping" : $result = AnyPingTask($task); $sorrysleep = 2; break;
+        	case "gwyping" : $result = AnyPingTask($task); $sorrysleep = 2; break;
+        	case "bblping" : $result = AnyPingTask($task); $sorrysleep = 2; break;
+        	case "uplping" : $result = AnyPingTask($task); $sorrysleep = 2; break;
         	        	
         	//
         	// Mtr task.
