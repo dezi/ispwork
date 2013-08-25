@@ -449,7 +449,14 @@ function AnyPingTask($task)
 			if ($ms == -1) $ms = $ms1 = Ping(IP($ip),500);
 			if ($ms == -1) $ms = $ms2 = SudoPing(IP($ip),1000);
 			if ($ms == -1) $ms = $ms3 = UserPing(IP($ip),2000);
-		
+			
+			if (($ms == -1) && isset($task[ "pmtr" ]) && isset($task[ "pmtr" ][ $ip ]))
+			{
+				$pmtrs = isset($task[ "pmtr" ][ $ip ];
+				
+				echo $task[ "what" ] . ": mtrpng " . IPZero($ip) . " = $pmtrs\n";
+			}
+			
 			if ($ms == -1)
 			{
 				echo $task[ "what" ] . ": failed " . IPZero($ip) . " = $ms1 $ms2 $ms3\n";
