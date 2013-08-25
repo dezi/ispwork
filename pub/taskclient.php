@@ -464,13 +464,13 @@ function MtrPingJob($task,$ip,$mtrs)
 
 				break;
 			}
-			
-			echo $task[ "what" ] . ": mtrpng " . IPZero($ip) . " = -1 ($mtrdom)\n";
 		}
 		
 		pclose($pfd);
 		
 		if ($ms != -1) break;
+			
+		echo $task[ "what" ] . ": mtrpng " . IPZero($ip) . " = -1 ($mtrdom)\n";
 	}
 	
 	return $ms;
