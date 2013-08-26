@@ -287,25 +287,20 @@ function GetAddrByHost($host,$timeout = 2)
 
 function WebPing($host,$timeout = 1000,$quiet = false) 
 { 
+	if (! isset($GLOBALS[ "hostip" ])) $GLOBALS[ "hostip" ] = array();
+
 	$timeout = 1 + floor(($timeout - 1) / 1000);
 	
 	$time = -1;
 	
 	for ($inx = 0; $inx < 2; $inx++)
 	{
-		if (isset($GLOBALS[ "hostip" ]))
+		if (! isset($GLOBALS[ "hostip" ][ $host ]))
 		{
-			if (! isset($GLOBALS[ "hostip" ][ $host ]))
-			{
-				$GLOBALS[ "hostip" ][ $host ] = GetAddrByHost($host);
-			}
+			$GLOBALS[ "hostip" ][ $host ] = GetAddrByHost($host);
+		}
 		
-			$hostip = $GLOBALS[ "hostip" ][ $host ];
-		}
-		else
-		{
-			$hostip = GetAddrByHost($host);
-		}
+		$hostip = $GLOBALS[ "hostip" ][ $host ];
 
 		if ($hostip !== false)
 		{
@@ -316,7 +311,7 @@ function WebPing($host,$timeout = 1000,$quiet = false)
 	
 			if (! $socket)
 			{
-				if (isset($GLOBALS[ "hostip" ]) && isset($GLOBALS[ "hostip" ][ $host ]))
+				if (isset($GLOBALS[ "hostip" ][ $host ]))
 				{
 					unset($GLOBALS[ "hostip" ][ $host ]);
 				}
