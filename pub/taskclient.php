@@ -267,20 +267,20 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 	return $time;
 }
 
-function GetAddrByHost($host,$timeout = 2) 
+function GetAddrByHost($host,$timeout = 4) 
 {	
-	$query = `nslookup -timeout=$timeout -retry=1 $host`;
+	$query = `nslookup -timeout=$timeout -retry=2 $host`;
    
 	if (preg_match('/\nAddress: (.*)\n/',$query,$matches))
 	{
 		$res = trim($matches[ 1 ]);
 		
-		echo "GetAddrByHost: $host => $res\n";
+		//echo "GetAddrByHost: $host => $res\n";
 
 		return $res;
 	}
 	
-	echo "GetAddrByHost: $host => nix\n";
+	//echo "GetAddrByHost: $host => nix\n";
 
 	return false;
 }
@@ -332,11 +332,9 @@ function WebPing($host,$timeout = 1000,$quiet = false)
 			if ($time != -1) break;
 		}
 		
-		if (! isset($GLOBALS[ "hostip" ])) break;
-		
 		unset($GLOBALS[ "hostip" ][ $host ]);
 	}
-	
+
 	return $time;
 }
 
@@ -593,13 +591,15 @@ function WebPingTask($task)
 			if ($ms == -1) $ms = $ms2 = WebPing($host,2000);
 			if ($ms == -1) $ms = $ms3 = WebPing($host,3000);
 			
+			$hostip = isset($GLOBALS[ "hostip" ][ $host ]) ? $GLOBALS[ "hostip" ][ $host ] : "n.n.";
+			
 			if ($ms == -1)
 			{
-				echo "$what: failed " . $host . " = $ms1 $ms2 $ms3\n";
+				echo "$what: failed " . $host . " = $hostip = $ms1 $ms2 $ms3\n";
 			}
 			else
 			{
-				echo "$what: pinged " . $host . " = $ms\n";
+				echo "$what: pinged " . $host . " = $hostip = $ms\n";
 			}
 			
 			array_push($result[ "list" ],$ms);
@@ -825,12 +825,12 @@ function CheckPing(&$tasks)
 	
 	array_push($tasks,"ping");
 	
-	array_push($tasks,"netping");
-	array_push($tasks,"endping");
-	array_push($tasks,"bblping");
-	array_push($tasks,"uplping");
-	array_push($tasks,"eplping");
-	array_push($tasks,"gwyping");
+	//array_push($tasks,"netping");
+	//array_push($tasks,"endping");
+	//array_push($tasks,"bblping");
+	//array_push($tasks,"uplping");
+	//array_push($tasks,"eplping");
+	//array_push($tasks,"gwyping");
 	array_push($tasks,"webping");
 
 	return true;
