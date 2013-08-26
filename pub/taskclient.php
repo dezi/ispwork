@@ -267,6 +267,84 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 	return $time;
 }
 
+function GetAddrByHost($host,$timeout = 2) 
+{	
+	$query = `nslookup -timeout=$timeout -retry=1 $host`;
+   
+	if (preg_match('/\nAddress: (.*)\n/',$query,$matches))
+	{
+		$res = trim($matches[ 1 ]);
+		
+		echo "GetAddrByHost: $host => $res\n";
+
+		return $res;
+	}
+	
+	echo "GetAddrByHost: $host => nix\n";
+
+	return false;
+}
+
+function WebPing($host,$timeout = 1000,$quiet = false) 
+{ 
+	$timeout = 1 + floor(($timeout - 1) / 1000);
+	
+	$time = -1;
+	
+	for ($inx = 0; $inx < 2; $inx++)
+	{
+		if (isset($GLOBALS[ "hostip" ]))
+		{
+			if (! isset($GLOBALS[ "hostip" ][ $host ]))
+			{
+				$GLOBALS[ "hostip" ][ $host ] = GetAddrByHost($host);
+			}
+		
+			$hostip = $GLOBALS[ "hostip" ][ $host ];
+		}
+		else
+		{
+			$hostip = GetAddrByHost($host);
+		}
+
+		if ($hostip !== false)
+		{
+			list($start_usec,$start_sec) = explode(" ",microtime());
+			$start_time = ((float) $start_usec + (float) $start_sec);
+  
+			$socket = @fsockopen($hostip,80,$errno,$errstr,$timeout); 
+	
+			if (! $socket)
+			{
+				if (isset($GLOBALS[ "hostip" ]) && isset($GLOBALS[ "hostip" ][ $host ]))
+				{
+					unset($GLOBALS[ "hostip" ][ $host ]);
+				}
+			
+				continue;
+			}
+			
+			fclose($socket);
+			
+			list($end_usec,$end_sec) = explode(" ",microtime());
+			$end_time = ((float) $end_usec + (float) $end_sec);
+
+			$total_time = $end_time - $start_time;
+
+			$time = floor($total_time * 1000);
+			if ($time <= 1) $time = -1;
+		
+			if ($time != -1) break;
+		}
+		
+		if (! isset($GLOBALS[ "hostip" ])) break;
+		
+		unset($GLOBALS[ "hostip" ][ $host ]);
+	}
+	
+	return $time;
+}
+
 function MTR_GetHops($host)
 {
 	$mtr = "mtr -c 1 -r --no-dns " . $host;
@@ -490,6 +568,54 @@ function MtrPingJob($task,$ip,$mtrs)
 	return $ms;
 }
 
+function WebPingTask($task)
+{
+	if (! CheckTask($task)) return null;
+
+	$result = array();
+	
+	$result[ "what" ] = $task[ "what" ];
+	$result[ "guid" ] = $task[ "guid" ];
+	$result[ "list" ] = array();
+			
+	if (isset($task[ "list" ]))
+	{
+		$what = $task[ "what" ];	
+		$lcnt = count($task[ "list" ]);
+		
+		for ($linx = 0; $linx < $lcnt; $linx++)
+		{
+			$host = $task[ "list" ][ $linx ];
+			
+			if (substr($host,0,4) != "www.") $host = "www." . $host;
+			
+			$ms  = -1;
+			$ms1 = "n.a.";
+			$ms2 = "n.a.";
+			$ms3 = "n.a.";
+		
+			if ($ms == -1) $ms = $ms1 = WebPing($host,1000);
+			if ($ms == -1) $ms = $ms2 = WebPing($host,2000);
+			if ($ms == -1) $ms = $ms3 = WebPing($host,3000);
+			
+			if ($ms == -1)
+			{
+				echo "$what: failed " . $host . " = $ms1 $ms2 $ms3\n";
+			}
+			else
+			{
+				echo "$what: pinged " . $host . " = $ms\n";
+			}
+			
+			array_push($result[ "list" ],$ms);
+		}
+	}
+	
+	if (! CheckTask($task)) return null;
+	
+	return $result;
+}
+
 function AnyPingTask($task)
 {
 	if (! CheckTask($task)) return null;
@@ -710,6 +836,7 @@ function CheckPing(&$tasks)
 	array_push($tasks,"uplping");
 	array_push($tasks,"eplping");
 	array_push($tasks,"gwyping");
+	array_push($tasks,"webping");
 
 	return true;
 }
@@ -875,6 +1002,7 @@ function MainLoop($server_host,$server_port)
         	case "gwyping" : $result = AnyPingTask($task); $sorrysleep = 2; break;
         	case "bblping" : $result = AnyPingTask($task); $sorrysleep = 2; break;
         	case "uplping" : $result = AnyPingTask($task); $sorrysleep = 2; break;
+        	case "webping" : $result = WebPingTask($task); $sorrysleep = 2; break;
         	        	
         	//
         	// Mtr task.
