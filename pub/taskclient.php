@@ -827,6 +827,18 @@ function CheckPing(&$tasks)
 	array_push($tasks,"uplping");
 	array_push($tasks,"eplping");
 	array_push($tasks,"gwyping");
+
+	return true;
+}
+
+function CheckNSLookup(&$tasks)
+{
+	exec("which which",$lines,$return);
+	if ($return != 0) return false;
+	
+	exec("which nslookup",$lines,$return);
+	if ($return != 0) return false;
+	
 	array_push($tasks,"webping");
 
 	return true;
@@ -885,9 +897,10 @@ function MainLoop($server_host,$server_port)
 	// Add capabilities we have.
 	//
 	
-	if (CheckMtr ($hello[ "tasks" ])) echo "Have mtr...\n";
-	if (CheckPing($hello[ "tasks" ])) echo "Have ping...\n";
-	if (CheckSudo($hello[ "tasks" ])) echo "Have sudo...\n";
+	if (CheckMtr     ($hello[ "tasks" ])) echo "Have mtr...\n";
+	if (CheckPing    ($hello[ "tasks" ])) echo "Have ping...\n";
+	if (CheckNSLookup($hello[ "tasks" ])) echo "Have nslookup...\n";
+	if (CheckSudo    ($hello[ "tasks" ])) echo "Have sudo...\n";
 
 	$hellopacket = EncodeMessage($hello);
 	$sorrysleep  = 2;
