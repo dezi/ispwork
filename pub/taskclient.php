@@ -311,11 +311,7 @@ function WebPing($host,$timeout = 1000,$quiet = false)
 	
 			if (! $socket)
 			{
-				if (isset($GLOBALS[ "hostip" ][ $host ]))
-				{
-					unset($GLOBALS[ "hostip" ][ $host ]);
-				}
-			
+				unset($GLOBALS[ "hostip" ][ $host ]);
 				continue;
 			}
 			
@@ -381,7 +377,7 @@ function MtrTask($task)
 		
 		foreach ($task[ "list" ] as $host)
 		{
-			Log("Mtr: list ($host/$mtrc/$mtrd)\n");
+			Logdat("Mtr: list ($host/$mtrc/$mtrd)\n");
 
 			$mtrrounds = array();
 			
@@ -825,12 +821,12 @@ function CheckPing(&$tasks)
 	
 	array_push($tasks,"ping");
 	
-	//array_push($tasks,"netping");
-	//array_push($tasks,"endping");
-	//array_push($tasks,"bblping");
-	//array_push($tasks,"uplping");
-	//array_push($tasks,"eplping");
-	//array_push($tasks,"gwyping");
+	array_push($tasks,"netping");
+	array_push($tasks,"endping");
+	array_push($tasks,"bblping");
+	array_push($tasks,"uplping");
+	array_push($tasks,"eplping");
+	array_push($tasks,"gwyping");
 	array_push($tasks,"webping");
 
 	return true;
