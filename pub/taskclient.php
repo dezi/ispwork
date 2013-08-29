@@ -499,7 +499,7 @@ function CheckTask($task)
 		if (UserPing($test,1000) != -1) return true;
 	}
 	
-	echo "Test: offline, aborting task...\n";
+	echo "Test: ($test) offline, aborting task...\n";
 	
 	return false;
 }
