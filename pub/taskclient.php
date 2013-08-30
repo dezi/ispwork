@@ -163,7 +163,7 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 	if (! isset($GLOBALS[ "sudo" ])) return -1;
 
 	$time  = -1;
-	$again =  3;
+	$again =  2;
 	
 	while ($again > 0)
 	{
@@ -205,45 +205,48 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 		
 			@socket_send($socket,$package,strlen($package),0);
 
-			if ($res = @socket_read($socket,255)) 
+			while (true)
 			{
-                $offset = strlen($res) - strlen($package);
-                $pingidentifier = $res[ $offset + 4 ] . $res[ $offset + 5 ];
-                $pingseqnumber  = $res[ $offset + 6 ] . $res[ $offset + 7 ];
+				if ($res = @socket_read($socket,255)) 
+				{
+					$offset = strlen($res) - strlen($package);
+					$pingidentifier = $res[ $offset + 4 ] . $res[ $offset + 5 ];
+					$pingseqnumber  = $res[ $offset + 6 ] . $res[ $offset + 7 ];
 				
-				if (($pingidentifier == $identifier) && ($pingseqnumber == $seqnumber))
-				{
-					list($end_usec,$end_sec) = explode(" ",microtime());
-					$end_time = ((float) $end_usec + (float) $end_sec);
-
-					$total_time = $end_time - $start_time;
-
-					$time = floor($total_time * 1000);
-					if ($time <= 1) $time = -1;
-					
-					$again = 0;
-				}
-				else
-				{
-					if (strpos($res,"ping:") > 0)
+					if (($pingidentifier == $identifier) && ($pingseqnumber == $seqnumber))
 					{
-						echo "sudopng: $host != " . substr($res,strpos($res,"ping:") + 5) . "...\n";
-				
-						while ($res = @socket_read($socket,255)) usleep(1000);
+						list($end_usec,$end_sec) = explode(" ",microtime());
+						$end_time = ((float) $end_usec + (float) $end_sec);
+
+						$total_time = $end_time - $start_time;
+
+						$time = floor($total_time * 1000);
+						if ($time <= 1) $time = -1;
 					
-						$again--;
+						$again = 0;
 					}
 					else
 					{
-						echo "sudopng: unreachable $host...\n";
+						if (strpos($res,"ping:") > 0)
+						{
+							echo "sudopng: $host != " . substr($res,strpos($res,"ping:") + 5) . "...\n";
+				
+							continue;
+						}
+						else
+						{
+							echo "sudopng: unreachable $host...\n";
 						
-						$again = 0;
+							$again--;
+						}
 					}
 				}
-			}
-			else
-			{
-				$again = 0;
+				else
+				{
+					$again--;
+				}
+				
+				break;
 			}
 		}
 	
@@ -481,7 +484,7 @@ function CheckShared($candidates)
 				if ($ms == -1) $ms = UserPing($candidate,2000);
 				if ($ms == -1) $ms = UserPing($candidate,3000);
 					
-				echo "chkping: ping $candidate = $ms\n";
+				echo "chkping: pinged $candidate = $ms\n";
 
 				if (! isset($shared[ $candidate ])) $shared[ $candidate ] = array();
 						
