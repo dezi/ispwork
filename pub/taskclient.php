@@ -205,48 +205,45 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 		
 			@socket_send($socket,$package,strlen($package),0);
 
-			while (true)
+			if ($res = @socket_read($socket,255)) 
 			{
-				if ($res = @socket_read($socket,255)) 
+				$offset = strlen($res) - strlen($package);
+				$pingidentifier = $res[ $offset + 4 ] . $res[ $offset + 5 ];
+				$pingseqnumber  = $res[ $offset + 6 ] . $res[ $offset + 7 ];
+			
+				if (($pingidentifier == $identifier) && ($pingseqnumber == $seqnumber))
 				{
-					$offset = strlen($res) - strlen($package);
-					$pingidentifier = $res[ $offset + 4 ] . $res[ $offset + 5 ];
-					$pingseqnumber  = $res[ $offset + 6 ] . $res[ $offset + 7 ];
-				
-					if (($pingidentifier == $identifier) && ($pingseqnumber == $seqnumber))
-					{
-						list($end_usec,$end_sec) = explode(" ",microtime());
-						$end_time = ((float) $end_usec + (float) $end_sec);
+					list($end_usec,$end_sec) = explode(" ",microtime());
+					$end_time = ((float) $end_usec + (float) $end_sec);
 
-						$total_time = $end_time - $start_time;
+					$total_time = $end_time - $start_time;
 
-						$time = floor($total_time * 1000);
-						if ($time <= 1) $time = -1;
-					
-						$again = 0;
-					}
-					else
-					{
-						if (strpos($res,"ping:") > 0)
-						{
-							echo "sudopng: $host != " . substr($res,strpos($res,"ping:") + 5) . "...\n";
+					$time = floor($total_time * 1000);
+					if ($time <= 1) $time = -1;
 				
-							continue;
-						}
-						else
-						{
-							echo "sudopng: unreachable $host...\n";
-						
-							$again--;
-						}
-					}
+					$again = 0;
 				}
 				else
 				{
-					$again--;
+					if (strpos($res,"ping:") > 0)
+					{
+						echo "sudopng: $host != " . substr($res,strpos($res,"ping:") + 5) . "...\n";
+			
+						if ($res = @socket_read($socket,255)) usleep(1000);
+						
+						$again--;
+					}
+					else
+					{
+						echo "sudopng: unreachable $host...\n";
+					
+						$again--;
+					}
 				}
-				
-				break;
+			}
+			else
+			{
+				$again--;
 			}
 		}
    	}
