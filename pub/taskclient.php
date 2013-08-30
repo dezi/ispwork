@@ -227,7 +227,7 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 				{
 					if (strpos($res,"ping:") > 0)
 					{
-						echo "Ping: $host != " . substr($res,strpos($res,"ping:") + 5) . "...\n";
+						echo "sudopng: $host != " . substr($res,strpos($res,"ping:") + 5) . "...\n";
 				
 						while ($res = @socket_read($socket,255)) usleep(1000);
 					
@@ -235,7 +235,7 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 					}
 					else
 					{
-						echo "Ping: unreachable $host...\n";
+						echo "sudopng: unreachable $host...\n";
 						
 						$again = 0;
 					}
