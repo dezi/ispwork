@@ -475,8 +475,12 @@ function CheckShared($candidates)
 			if ((! isset($shared[ $candidate ])) || 
 				((time() - $shared[ $candidate ][ "ts" ]) >= 10))
 			{
-				$ms = UserPing($candidate,3000);
-			
+				$ms = -1;
+				
+				if ($ms == -1) $ms = UserPing($candidate,1000);
+				if ($ms == -1) $ms = UserPing($candidate,2000);
+				if ($ms == -1) $ms = UserPing($candidate,3000);
+					
 				echo "chkping: ping $candidate = $ms\n";
 
 				if (! isset($shared[ $candidate ])) $shared[ $candidate ] = array();
@@ -487,7 +491,6 @@ function CheckShared($candidates)
 			
 				if ($ms != -1)
 				{
-				
 					$pingok = true;
 					break;
 				}
