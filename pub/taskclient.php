@@ -164,8 +164,15 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 
 	$time  = -1;
 	$again =  2;
-	
-	$socket = @socket_create(AF_INET,SOCK_RAW,1);
+
+	if (isset($GLOBALS[ "sudosocket" ]))
+	{
+		$socket = $GLOBALS[ "sudosocket" ];
+	}
+	else
+	{
+		$socket = @socket_create(AF_INET,SOCK_RAW,1);
+	}
 	
 	while ($again > 0)
 	{
@@ -247,8 +254,11 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 			}
 		}
    	}
-   			
-	socket_close($socket);
+ 
+	if (! isset($GLOBALS[ "sudosocket" ]))
+  	{		
+		socket_close($socket);
+	}
 	
    	$GLOBALS[ "pingbad" ] = ($time == -1) ? $GLOBALS[ "pingbad" ] + 1 : 0;		
 
@@ -887,8 +897,23 @@ function CheckSudo(&$tasks)
 	$socket = @socket_create(AF_INET,SOCK_RAW,1);
 	
     if ($socket === false) return false;
-        
-    socket_close($socket);
+    
+    if ($GLOBALS[ "uname" ] == "Darwin")
+    {
+        //
+        // Darwin cannot re-use socket.
+        //
+
+        socket_close($socket);
+    }
+    else
+    {
+        //
+        // Store socket for further use.
+        //
+
+        $GLOBALS[ "sudosocket" ] = $socket;
+    }
     
 	$GLOBALS[ "sudo" ] = true;
 	
