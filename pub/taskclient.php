@@ -459,7 +459,9 @@ function CheckShared($candidates)
 	
 	foreach ($candidates as $candidate)
 	{
-		if (isset($shared[ $candidate ]) && ((time() - $shared[ $candidate ]) < 10))
+		if ((isset($shared[ $candidate ])) && 
+			($shared[ $candidate ][ "ms" ] != -1) &&
+			((time() - $shared[ $candidate ][ "ts" ]) < 10))
 		{
 			$pingok = true;
 			break;
@@ -470,17 +472,25 @@ function CheckShared($candidates)
 	{
 		foreach ($candidates as $candidate)
 		{
-			$ms = UserPing($candidate,2000);
-			
-			echo "chkping: ping $candidate = $ms\n";
-
-			if ($ms != -1)
+			if ((! isset($shared[ $candidate ])) || 
+				((time() - $shared[ $candidate ][ "ts" ]) >= 10))
 			{
-				$shared[ $candidate ] = time();
+				$ms = UserPing($candidate,2000);
+			
+				echo "chkping: ping $candidate = $ms\n";
+
+				if (! isset($shared[ $candidate ])) $shared[ $candidate ] = array();
+						
+				$shared[ $candidate ][ "ms" ] = $ms;
+				$shared[ $candidate ][ "ts" ] = time();
 				shm_put_var($GLOBALS[ "myshmident" ],1,$shared); 
+			
+				if ($ms != -1)
+				{
 				
-				$pingok = true;
-				break;
+					$pingok = true;
+					break;
+				}
 			}
 		}
 	}
