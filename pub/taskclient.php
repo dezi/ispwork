@@ -165,10 +165,10 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 	$time  = -1;
 	$again =  2;
 	
+	$socket = @socket_create(AF_INET,SOCK_RAW,1);
+	
 	while ($again > 0)
 	{
-		$socket = @socket_create(AF_INET,SOCK_RAW,1);
-	
 		$sec  = floor($timeout / 1000);
 		$usec = ($timeout % 1000) * 1000;
 
@@ -249,10 +249,10 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 				break;
 			}
 		}
-	
-		socket_close($socket);
    	}
    			
+	socket_close($socket);
+	
    	$GLOBALS[ "pingbad" ] = ($time == -1) ? $GLOBALS[ "pingbad" ] + 1 : 0;		
 
 	return $time;
