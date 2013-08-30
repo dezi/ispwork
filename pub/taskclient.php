@@ -449,26 +449,65 @@ function MtrLogsTask($task)
 	return $result;
 }
 
+function CheckShared($candidates)
+{
+	$pingok = false;
+
+	sem_acquire($GLOBALS[ "mysemident" ]);
+	
+	$shared = shm_has_var($GLOBALS[ "myshmident" ],1) ? shm_get_var($GLOBALS[ "myshmident" ],1) : array();
+	
+	foreach ($candidates as $candidate)
+	{
+		if (isset($shared[ $candidate ]) && ((time() - $shared[ $candidate ]) < 10))
+		{
+			$pingok = true;
+			break;
+		}
+	}
+	
+	if (! $pingok)
+	{
+		foreach ($candidates as $candidate)
+		{
+			$ms = UserPing($candidate,2000);
+			
+			echo "chkping: ping $candidate = $ms\n";
+
+			if ($ms != -1)
+			{
+				$shared[ $candidate ] = time();
+				shm_put_var($GLOBALS[ "myshmident" ],1,$shared); 
+				
+				$pingok = true;
+				break;
+			}
+		}
+	}
+
+	sem_release($GLOBALS[ "mysemident" ]);
+
+	return $pingok;
+}
+
 function CheckLine()
 {
 	if ($GLOBALS[ "pingbad" ] > 20)
 	{
-		if ((UserPing("www.bing.com",  2000) == -1) &&
-			(UserPing("www.google.de", 2000) == -1) &&
-			(UserPing("www.google.com",2000) == -1))
-		{
-			$GLOBALS[ "linebad" ] = true;
-	
-			echo "chkline: offline, aborting task...\n";
+		$candidates = array("www.bing.com","www.google.de","www.google.com");
+
+		$pingok = CheckShared($candidates);
 		
-			return false;
-		}
-		else
+		if ($pingok)
 		{
-			echo "chkline: check success...\n";
+			$GLOBALS[ "pingbad" ] = 0;
+
+			//echo "chkline: check success...\n";
+			return true;
 		}
-	
-		$GLOBALS[ "pingbad" ] = 0;
+		
+		echo "chkline: offline, aborting task...\n";
+		return false;
 	}
 	
 	return true;
@@ -478,14 +517,11 @@ function CheckTask($task)
 {
 	if (! isset($task[ "test" ])) return true;
 	
-	foreach ($task[ "test" ] as $test)
-	{
-		if (UserPing($test,1000) != -1) return true;
-	}
+	$pingok = CheckShared($task[ "test" ]);
 	
-	echo "chktask: ($test) offline, aborting task...\n";
+	if (! $pingok) echo "chktask: offline, aborting task...\n";
 	
-	return false;
+	return $pingok;
 }
 
 function MtrPingJob($task,$ip,$mtrs)
@@ -850,10 +886,6 @@ function CheckSudo(&$tasks)
 
 function MainLoop($server_host,$server_port)
 {
-		echo __FILE__ . "pupsp\n";
-	exit();
-	
-
     //
     // Prepare a hello message with our capabilities.
     //
@@ -1091,6 +1123,16 @@ function Main()
 		exit();
 	}
 
+	$GLOBALS[ "myshmident" ] = shm_attach(ftok(__FILE__ ,"m"));	
+	$GLOBALS[ "mysemident" ] = sem_get   (ftok(__FILE__ ,"s"));	
+
+	if (($GLOBALS[ "myshmident" ] === false) || 
+		($GLOBALS[ "mysemident" ] === false))
+	{
+		echo "Sorry, cannot attach shared memory...\n";
+		exit();
+	}
+	
 	if (count($_SERVER[ "argv" ]) > 1)
 	{
 		$selfname = $_SERVER[ "argv" ][ 0 ];
