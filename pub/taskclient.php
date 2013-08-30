@@ -167,14 +167,7 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 	
 	while ($again > 0)
 	{
-		if (isset($GLOBALS[ "sudosocket" ]))
-		{
-			$socket = $GLOBALS[ "sudosocket" ];
-		}
-		else
-		{
-			$socket = @socket_create(AF_INET,SOCK_RAW,1);
-		}
+		$socket = @socket_create(AF_INET,SOCK_RAW,1);
 	
 		$sec  = floor($timeout / 1000);
 		$usec = ($timeout % 1000) * 1000;
@@ -218,8 +211,6 @@ function SudoPing($host,$timeout = 100,$quiet = true)
                 $pingidentifier = $res[ $offset + 4 ] . $res[ $offset + 5 ];
                 $pingseqnumber  = $res[ $offset + 6 ] . $res[ $offset + 7 ];
 				
-				//if (substr($res,-$idntlen) == substr($package,-$idntlen))
-	
 				if (($pingidentifier == $identifier) && ($pingseqnumber == $seqnumber))
 				{
 					list($end_usec,$end_sec) = explode(" ",microtime());
@@ -256,10 +247,7 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 			}
 		}
 	
-		if (! isset($GLOBALS[ "sudosocket" ]))
-		{
-			socket_close($socket);
-		}
+		socket_close($socket);
    	}
    			
    	$GLOBALS[ "pingbad" ] = ($time == -1) ? $GLOBALS[ "pingbad" ] + 1 : 0;		
@@ -269,18 +257,14 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 
 function GetAddrByHost($host,$timeout = 4) 
 {	
-	$query = `nslookup -timeout=$timeout -retry=2 $host`;
+	$query = `nslookup -timeout=$timeout -retry=3 $host`;
    
 	if (preg_match('/\nAddress: (.*)\n/',$query,$matches))
 	{
 		$res = trim($matches[ 1 ]);
-		
-		//echo "GetAddrByHost: $host => $res\n";
 
 		return $res;
 	}
-	
-	//echo "GetAddrByHost: $host => nix\n";
 
 	return false;
 }
@@ -357,7 +341,7 @@ function MTR_GetHops($host)
 	return $hops;
 }
 
-function MtrTask($task)
+function MtrLogsTask($task)
 {
 	$result = array();
 	
@@ -465,9 +449,9 @@ function MtrTask($task)
 	return $result;
 }
 
-function CheckLine($force = false)
+function CheckLine()
 {
-	if (($GLOBALS[ "pingbad" ] > 20) || $force)
+	if ($GLOBALS[ "pingbad" ] > 20)
 	{
 		if ((UserPing("www.bing.com",  2000) == -1) &&
 			(UserPing("www.google.de", 2000) == -1) &&
@@ -475,13 +459,13 @@ function CheckLine($force = false)
 		{
 			$GLOBALS[ "linebad" ] = true;
 	
-			echo "Line: offline, aborting task...\n";
+			echo "chkline: offline, aborting task...\n";
 		
 			return false;
 		}
 		else
 		{
-			echo "Line: check success...\n";
+			echo "chkline: check success...\n";
 		}
 	
 		$GLOBALS[ "pingbad" ] = 0;
@@ -499,7 +483,7 @@ function CheckTask($task)
 		if (UserPing($test,1000) != -1) return true;
 	}
 	
-	echo "Test: ($test) offline, aborting task...\n";
+	echo "chktask: ($test) offline, aborting task...\n";
 	
 	return false;
 }
@@ -807,6 +791,7 @@ function CheckMtr(&$tasks)
 	if ($return != 0) return false;
 	
 	array_push($tasks,"mtr");
+	array_push($tasks,"mtrlogs");
 	
 	return true;
 }
@@ -853,25 +838,8 @@ function CheckSudo(&$tasks)
 	$socket = @socket_create(AF_INET,SOCK_RAW,1);
 	
     if ($socket === false) return false;
-    
-    if ($GLOBALS[ "uname" ] == "Darwin")
-    {
-    	//
-    	// Darwin cannot re-use socket.
-    	//
-    	
-    	socket_close($socket);
-    }
-    else
-    {
-    	//
-    	// Store socket for further use.
-    	//
         
-        socket_close($socket);
-	
-    	//$GLOBALS[ "sudosocket" ] = $socket;
-    }
+    socket_close($socket);
     
 	$GLOBALS[ "sudo" ] = true;
 	
@@ -882,6 +850,10 @@ function CheckSudo(&$tasks)
 
 function MainLoop($server_host,$server_port)
 {
+		echo __FILE__ . "pupsp\n";
+	exit();
+	
+
     //
     // Prepare a hello message with our capabilities.
     //
@@ -997,7 +969,7 @@ function MainLoop($server_host,$server_port)
 				break;
         	
         	//
-        	// Ping tasks.
+        	// Common tasks.
         	//
         	
         	case "netping" : $result = NetPingTask($task); $sorrysleep = 2; break;
@@ -1007,15 +979,7 @@ function MainLoop($server_host,$server_port)
         	case "bblping" : $result = AnyPingTask($task); $sorrysleep = 2; break;
         	case "uplping" : $result = AnyPingTask($task); $sorrysleep = 2; break;
         	case "webping" : $result = WebPingTask($task); $sorrysleep = 2; break;
-        	        	
-        	//
-        	// Mtr task.
-        	//
-        	
-        	case "mtr" :
-        		$result = MtrTask($task);
-        		$sorrysleep = 2;
-        		break;
+        	case "mtrlogs" : $result = MtrLogsTask($task); $sorrysleep = 2; break;
         	        	
         	//
         	// Unknown task.
@@ -1120,6 +1084,12 @@ function ForkProcs($selfname,$numprocs)
 function Main()
 {
 	date_default_timezone_set("UTC");
+	
+	if (! function_exists('shm_attach'))
+	{
+		echo "Sorry, php has no shared memory...\n";
+		exit();
+	}
 
 	if (count($_SERVER[ "argv" ]) > 1)
 	{
