@@ -174,6 +174,9 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 		$socket = @socket_create(AF_INET,SOCK_RAW,1);
 	}
 	
+	$identifier = chr(mt_rand(0,255)) . chr(mt_rand(0,255));
+	$seqnumber  = chr(mt_rand(0,255)) . chr(mt_rand(0,255));
+
 	while ($again > 0)
 	{
 		$sec  = floor($timeout / 1000);
@@ -190,8 +193,6 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 			$type       = "\x08";
 			$code       = "\x00";
 			$checksum   = "\x00\x00";
-			$identifier = chr(mt_rand(0,255)) . chr(mt_rand(0,255));
-			$seqnumber  = chr(mt_rand(0,255)) . chr(mt_rand(0,255));
 			$data       = "ping:$host";
 
 			if (strlen($data) % 2) $data .= "\x00";
