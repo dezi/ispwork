@@ -205,8 +205,6 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 			$checksum = pack('n*',~$sum);
 
 			$package = $type . $code . $checksum . $identifier . $seqnumber . $data;
-			
-			$idntlen = strlen($data);
 
 			list($start_usec,$start_sec) = explode(" ",microtime());
 			$start_time = ((float) $start_usec + (float) $start_sec);
@@ -372,7 +370,7 @@ function MtrLogsTask($task)
 		
 		foreach ($task[ "list" ] as $host)
 		{
-			Logdat("Mtr: list ($host/$mtrc/$mtrd)\n");
+			Logdat("mtrlogs: $host/$mtrc/$mtrd\n");
 
 			$mtrrounds = array();
 			
@@ -420,7 +418,7 @@ function MtrLogsTask($task)
 		{
 			$ip = IPZero($ipbin);
 			
-			echo "Mtr: from ($ip/$mtrc/$mtrd)\n";
+			echo "mtrlogs: $ip/$mtrc/$mtrd\n";
 
 			$mtrrounds = array();
 			
