@@ -217,7 +217,8 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 				$pingidentifier = $res[ $offset + 4 ] . $res[ $offset + 5 ];
 				$pingseqnumber  = $res[ $offset + 6 ] . $res[ $offset + 7 ];
 			
-				if (($pingidentifier == $identifier) && ($pingseqnumber == $seqnumber))
+				if ((($pingidentifier == $identifier) && ($pingseqnumber == $seqnumber)) ||
+					((strpos($res,"ping:") > 0) && (substr($res,strpos($res,"ping:") + 5) == $host)))
 				{
 					list($end_usec,$end_sec) = explode(" ",microtime());
 					$end_time = ((float) $end_usec + (float) $end_sec);
