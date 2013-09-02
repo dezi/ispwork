@@ -181,36 +181,36 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 
 	$identifier = chr(mt_rand(0,255)) . chr(mt_rand(0,255));
 	$seqnumber  = chr(mt_rand(0,255)) . chr(mt_rand(0,255));
+	
+	if (socket_connect($socket,$host,null) === false)
+	{
+		if (! $quiet) echo "Cannot resolve '$host'.\n";
+	}
+	else
+	{
+		$type       = "\x08";
+		$code       = "\x00";
+		$checksum   = "\x00\x00";
+		$data       = "ping:$host";
 
-	while ($again > 0)
-	{		
-		if (socket_connect($socket,$host,null) === false)
-		{
-			if (! $quiet) echo "Cannot resolve '$host'.\n";
-		}
-		else
-		{
-			$type       = "\x08";
-			$code       = "\x00";
-			$checksum   = "\x00\x00";
-			$data       = "ping:$host";
-
-			if (strlen($data) % 2) $data .= "\x00";
-			
-			$package = $type . $code . $checksum . $identifier . $seqnumber . $data;
-			
-			$bit = unpack('n*',$package);
-			$sum = array_sum($bit);
-			while ($sum >> 16) $sum = ($sum >> 16) + ($sum & 0xffff);
-			$checksum = pack('n*',~$sum);
-
-			$package = $type . $code . $checksum . $identifier . $seqnumber . $data;
-
-			list($start_usec,$start_sec) = explode(" ",microtime());
-			$start_time = ((float) $start_usec + (float) $start_sec);
+		if (strlen($data) % 2) $data .= "\x00";
 		
-			@socket_send($socket,$package,strlen($package),0);
+		$package = $type . $code . $checksum . $identifier . $seqnumber . $data;
+		
+		$bit = unpack('n*',$package);
+		$sum = array_sum($bit);
+		while ($sum >> 16) $sum = ($sum >> 16) + ($sum & 0xffff);
+		$checksum = pack('n*',~$sum);
 
+		$package = $type . $code . $checksum . $identifier . $seqnumber . $data;
+
+		list($start_usec,$start_sec) = explode(" ",microtime());
+		$start_time = ((float) $start_usec + (float) $start_sec);
+	
+		@socket_send($socket,$package,strlen($package),0);
+
+		while ($again > 0)
+		{		
 			if ($res = @socket_read($socket,255)) 
 			{
 				$offset = strlen($res) - strlen($package);
@@ -236,7 +236,7 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 					{
 						echo "sudopng: $host != " . substr($res,strpos($res,"ping:") + 5) . "...\n";
 			
-						if ($res = @socket_read($socket,255)) usleep(1000);
+						//if ($res = @socket_read($socket,255)) usleep(1000);
 						
 						$again--;
 					}
@@ -253,8 +253,8 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 				$again--;
 			}
 		}
-   	}
- 
+	}
+	
 	if (! isset($GLOBALS[ "sudosocket" ]))
   	{		
 		socket_close($socket);
