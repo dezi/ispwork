@@ -174,16 +174,16 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 		$socket = @socket_create(AF_INET,SOCK_RAW,1);
 	}
 	
+	$sec  = floor($timeout / 1000);
+	$usec = ($timeout % 1000) * 1000;
+
+	socket_set_option($socket,SOL_SOCKET,SO_RCVTIMEO,array("sec" => $sec, "usec" => $usec));
+
 	$identifier = chr(mt_rand(0,255)) . chr(mt_rand(0,255));
 	$seqnumber  = chr(mt_rand(0,255)) . chr(mt_rand(0,255));
 
 	while ($again > 0)
-	{
-		$sec  = floor($timeout / 1000);
-		$usec = ($timeout % 1000) * 1000;
-
-		socket_set_option($socket,SOL_SOCKET,SO_RCVTIMEO,array("sec" => $sec, "usec" => $usec));
-		
+	{		
 		if (socket_connect($socket,$host,null) === false)
 		{
 			if (! $quiet) echo "Cannot resolve '$host'.\n";
