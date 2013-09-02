@@ -218,7 +218,7 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 				$pingseqnumber  = $res[ $offset + 6 ] . $res[ $offset + 7 ];
 			
 				if ((($pingidentifier == $identifier) && ($pingseqnumber == $seqnumber)) ||
-					((strpos($res,"ping:") > 0) && (substr($res,strpos($res,"ping:") + 5) == $host)))
+					((strpos($res,"ping:") > 0) && (substr($res,strpos($res,"ping:") + 5,strlen($host)) == $host)))
 				{
 					list($end_usec,$end_sec) = explode(" ",microtime());
 					$end_time = ((float) $end_usec + (float) $end_sec);
@@ -728,7 +728,7 @@ function EndPingTask($task)
 			$ip   = $task[ "list" ][ $linx ];
 			$best = $task[ "best" ][ $linx ];
 
-			echo "endping: " . IPZero($ip) . "\n";
+			//echo "endping: " . IPZero($ip) . "\n";
 			
 			$ms   = -1;
 			$bhit = "+";
