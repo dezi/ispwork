@@ -163,7 +163,7 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 	if (! isset($GLOBALS[ "sudo" ])) return -1;
 
 	$time  = -1;
-	$again =  3;
+	$again =  5;
 
 	if (isset($GLOBALS[ "sudosocket" ]))
 	{
@@ -216,8 +216,12 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 				$offset = strlen($res) - strlen($package);
 				$pingidentifier = $res[ $offset + 4 ] . $res[ $offset + 5 ];
 				$pingseqnumber  = $res[ $offset + 6 ] . $res[ $offset + 7 ];
-			
-				if ((($pingidentifier == $identifier) && ($pingseqnumber == $seqnumber)) ||
+			    
+				$remote = ord($res[ 12 ]) . "." . ord($res[ 13 ]) . "." .ord($res[ 14 ]) . "." .ord($res[ 15 ]);
+                $local  = ord($res[ 16 ]) . "." . ord($res[ 17 ]) . "." .ord($res[ 18 ]) . "." .ord($res[ 19 ]);
+
+				if ((($remote == $host)) ||
+					(($pingidentifier == $identifier) && ($pingseqnumber == $seqnumber)) ||
 					((strpos($res,"ping:") > 0) && (substr($res,strpos($res,"ping:") + 5,strlen($host)) == $host)))
 				{
 					list($end_usec,$end_sec) = explode(" ",microtime());
@@ -234,15 +238,13 @@ function SudoPing($host,$timeout = 100,$quiet = true)
 				{
 					if (strpos($res,"ping:") > 0)
 					{
-						echo "sudopng: $host != " . substr($res,strpos($res,"ping:") + 5) . "...\n";
-			
-						//if ($res = @socket_read($socket,255)) usleep(1000);
-						
+						echo "sudopng: $host != $remote != " . substr($res,strpos($res,"ping:") + 5) . "...\n";
+									
 						$again--;
 					}
 					else
 					{
-						echo "sudopng: unreachable $host...\n";
+						echo "sudopng: $host != $remote...\n";
 					
 						$again--;
 					}
