@@ -950,6 +950,12 @@ function MainLoop($server_host,$server_port)
 	$sorrysleep  = 2;
 	
 	//
+	// Random sleep to yield to others.
+	//
+	
+	usleep(1000 * mt_rand(1000,5000));
+	
+	//
 	// Open a generic UPD socket.
 	//
 	
