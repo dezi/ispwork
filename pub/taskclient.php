@@ -910,6 +910,12 @@ function CheckSudo(&$tasks)
     }
     else
     {
+    	//
+    	// Connect socket to loopback.
+    	//
+    	
+    	socket_connect($socket,"127.0.0.1",null);
+    	
         //
         // Store socket for further use.
         //
