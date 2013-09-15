@@ -911,10 +911,10 @@ function CheckSudo(&$tasks)
     else
     {
     	//
-    	// Connect socket to loopback.
+    	// Connect socket to bogus host.
     	//
     	
-    	socket_connect($socket,"127.0.0.1",null);
+    	socket_connect($socket,"99.99.99.99",null);
     	
         //
         // Store socket for further use.
