@@ -25,7 +25,7 @@ function Logdat($message)
 		}
 		else
 		{
-			$GLOBALS[ "logdt" ] = $today
+			$GLOBALS[ "logdt" ] = $today;
 		}
 		
 		$GLOBALS[ "logfd" ] = fopen($logfile,"a");
