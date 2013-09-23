@@ -15,6 +15,8 @@ function Logdat($message)
 {
 	$logfile = "../log/taskclient.log";
 	
+	$today = date("Ymd");
+	
 	if (! isset($GLOBALS[ "logfd" ]))
 	{
 		if (file_exists($logfile))
@@ -23,7 +25,7 @@ function Logdat($message)
 		}
 		else
 		{
-			$GLOBALS[ "logdt" ] = date("Ymd");
+			$GLOBALS[ "logdt" ] = $today
 		}
 		
 		$GLOBALS[ "logfd" ] = fopen($logfile,"a");
@@ -37,7 +39,7 @@ function Logdat($message)
 		chmod($logfile,0666);
 	}
 	
-	if ($GLOBALS[ "logdt" ] != date("Ymd"))
+	if ($GLOBALS[ "logdt" ] != $today)
 	{
 		//
 		// Log file expired, re-open.
@@ -48,7 +50,7 @@ function Logdat($message)
 		rename($logfile,substr($logfile,0,-4) . "." . $GLOBALS[ "logdt" ] . ".log");
 		
 		$GLOBALS[ "logfd" ] = fopen($logfile,"a");
-		$GLOBALS[ "logdt" ] = date("Ymd",filemtime($logfile));
+		$GLOBALS[ "logdt" ] = $today;
 		
 		chmod($logfile,0666);
 	}
