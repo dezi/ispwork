@@ -1231,7 +1231,7 @@ function Main()
 		exit();
 	}
 
-	$GLOBALS[ "myshmident" ] = shm_attach(ftok(__FILE__ ,"m"));	
+	$GLOBALS[ "myshmident" ] = shm_attach(ftok(__FILE__ ,"m"),128 * 1024);	
 	$GLOBALS[ "mysemident" ] = sem_get   (ftok(__FILE__ ,"s"));	
 
 	if (($GLOBALS[ "myshmident" ] === false) || 
