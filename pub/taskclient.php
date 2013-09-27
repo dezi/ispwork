@@ -1233,7 +1233,7 @@ function Main()
 
 	if (count($_SERVER[ "argv" ]) > 1)
 	{
-		shm_remove(shm_attach(ftok(__FILE__ ,"m")););
+		shm_remove(shm_attach(ftok(__FILE__ ,"m")));
 		
 		$selfname = $_SERVER[ "argv" ][ 0 ];
 		$numprocs = intval($_SERVER[ "argv" ][ 1 ]);
