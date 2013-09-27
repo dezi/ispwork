@@ -511,8 +511,6 @@ function DelHostIP($host)
 	shm_put_var($GLOBALS[ "myshmident" ],2,$shared); 
 	
 	sem_release($GLOBALS[ "mysemident" ]);
-	
-	return $shared[ $host ];
 }
 
 function CheckShared($candidates)
