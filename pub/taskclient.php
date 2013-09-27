@@ -285,20 +285,18 @@ function GetAddrByHost($host,$timeout = 4)
 
 function WebPing($host,$timeout = 1000,$quiet = false) 
 { 
-	if (! isset($GLOBALS[ "hostip" ])) $GLOBALS[ "hostip" ] = array();
-
 	$timeout = 1 + floor(($timeout - 1) / 1000);
 	
 	$time = -1;
 	
 	for ($inx = 0; $inx < 2; $inx++)
 	{
-		if (! isset($GLOBALS[ "hostip" ][ $host ]))
+		if (! HasHostIP($host))
 		{
-			$GLOBALS[ "hostip" ][ $host ] = GetAddrByHost($host);
+			SetHostIP($host,GetAddrByHost($host));
 		}
 		
-		$hostip = $GLOBALS[ "hostip" ][ $host ];
+		$hostip = GetHostIP($host);
 
 		if ($hostip !== false)
 		{
@@ -309,7 +307,7 @@ function WebPing($host,$timeout = 1000,$quiet = false)
 	
 			if (! $socket)
 			{
-				unset($GLOBALS[ "hostip" ][ $host ]);
+				DelHostIP($host);
 				continue;
 			}
 			
@@ -326,7 +324,7 @@ function WebPing($host,$timeout = 1000,$quiet = false)
 			if ($time != -1) break;
 		}
 		
-		unset($GLOBALS[ "hostip" ][ $host ]);
+		DelHostIP($host);
 	}
 
 	return $time;
@@ -461,6 +459,58 @@ function MtrLogsTask($task)
 	}
 	
 	return $result;
+}
+
+function HasHostIP($host)
+{
+	sem_acquire($GLOBALS[ "mysemident" ]);
+	
+	$shared = shm_has_var($GLOBALS[ "myshmident" ],2) ? shm_get_var($GLOBALS[ "myshmident" ],2) : array();
+	
+	sem_release($GLOBALS[ "mysemident" ]);
+	
+	return isset($shared[ $host ]);
+}
+
+function GetHostIP($host)
+{
+	sem_acquire($GLOBALS[ "mysemident" ]);
+	
+	$shared = shm_has_var($GLOBALS[ "myshmident" ],2) ? shm_get_var($GLOBALS[ "myshmident" ],2) : array();
+	
+	sem_release($GLOBALS[ "mysemident" ]);
+	
+	return $shared[ $host ];
+}
+
+function SetHostIP($host,$ip)
+{
+	sem_acquire($GLOBALS[ "mysemident" ]);
+	
+	$shared = shm_has_var($GLOBALS[ "myshmident" ],2) ? shm_get_var($GLOBALS[ "myshmident" ],2) : array();
+	
+	$shared[ $host ] = $ip;
+	
+	shm_put_var($GLOBALS[ "myshmident" ],2,$shared); 
+	
+	sem_release($GLOBALS[ "mysemident" ]);
+	
+	return $shared[ $host ];
+}
+
+function DelHostIP($host)
+{
+	sem_acquire($GLOBALS[ "mysemident" ]);
+	
+	$shared = shm_has_var($GLOBALS[ "myshmident" ],2) ? shm_get_var($GLOBALS[ "myshmident" ],2) : array();
+	
+	unset($shared[ $host ]);
+	
+	shm_put_var($GLOBALS[ "myshmident" ],2,$shared); 
+	
+	sem_release($GLOBALS[ "mysemident" ]);
+	
+	return $shared[ $host ];
 }
 
 function CheckShared($candidates)
@@ -634,7 +684,7 @@ function WebPingTask($task)
 			if ($ms == -1) $ms = $ms2 = WebPing($host,2000);
 			if ($ms == -1) $ms = $ms3 = WebPing($host,3000);
 			
-			$hostip = isset($GLOBALS[ "hostip" ][ $host ]) ? $GLOBALS[ "hostip" ][ $host ] : "n.n.";
+			$hostip = HasHostIP($host) ? GetHostIP($host) : "n.n.";
 			$ipzero = IPZero($hostip);
 			
 			if ($ms == -1)
