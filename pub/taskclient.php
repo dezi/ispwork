@@ -293,11 +293,15 @@ function WebPing($host,$timeout = 1000,$quiet = false)
 	{
 		if (! HasHostIP($host))
 		{
-			SetHostIP($host,GetAddrByHost($host));
+			$hostip = GetAddrByHost($host);
+			echo "GetAddrByHost: $host => $hostip\n";
+			SetHostIP($host,$hostip);
+		}
+		else
+		{
+			$hostip = GetHostIP($host);
 		}
 		
-		$hostip = GetHostIP($host);
-
 		if ($hostip !== false)
 		{
 			list($start_usec,$start_sec) = explode(" ",microtime());
@@ -468,8 +472,6 @@ function HasHostIP($host)
 	$shared = shm_has_var($GLOBALS[ "myshmident" ],2) ? shm_get_var($GLOBALS[ "myshmident" ],2) : array();
 	
 	sem_release($GLOBALS[ "mysemident" ]);
-	
-	echo "HasHostIP: " . count($shared) . "\n";
 	
 	return isset($shared[ $host ]);
 }
