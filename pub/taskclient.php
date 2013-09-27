@@ -834,7 +834,7 @@ function NetPingTask($task)
 		for ($binip = $from; $binip <= $upto; $binip++)
 		{
 			$ms = Ping(Bin2IP($binip));
-			if ($ms != 1) $pc++;
+			if ($ms != -1) $pc++;
 			
 			array_push($result[ "list" ],$ms);
 
