@@ -294,7 +294,6 @@ function WebPing($host,$timeout = 1000,$quiet = false)
 		if (! HasHostIP($host))
 		{
 			$hostip = GetAddrByHost($host);
-			echo "GetAddrByHost: $host => $hostip\n";
 			SetHostIP($host,$hostip);
 		}
 		else
