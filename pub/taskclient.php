@@ -375,7 +375,7 @@ function MtrLogsTask($task)
 		
 		foreach ($task[ "list" ] as $host)
 		{
-			Logdat("mtrlogs: $host/$mtrc/$mtrd\n");
+			echo "mtrlogs: $host/$mtrc/$mtrd\n";
 
 			$mtrrounds = array();
 			
