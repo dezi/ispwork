@@ -925,13 +925,15 @@ function CheckPing(&$tasks)
 	
 	array_push($tasks,"ping");
 	
+	/*
 	array_push($tasks,"netping");
 	array_push($tasks,"endping");
 	array_push($tasks,"bblping");
 	array_push($tasks,"uplping");
 	array_push($tasks,"eplping");
 	array_push($tasks,"gwyping");
-
+	*/
+	
 	return true;
 }
 
@@ -1244,7 +1246,7 @@ function Main()
 	}
 	else
 	{
-		$GLOBALS[ "myshmident" ] = shm_attach(ftok(__FILE__ ,"m"),128 * 1024);	
+		$GLOBALS[ "myshmident" ] = shm_attach(ftok(__FILE__ ,"m"),512 * 1024);	
 		$GLOBALS[ "mysemident" ] = sem_get   (ftok(__FILE__ ,"s"));	
 
 		if (($GLOBALS[ "myshmident" ] === false) || 
