@@ -924,14 +924,12 @@ function CheckPing(&$tasks)
 	
 	array_push($tasks,"ping");
 	
-	/*
 	array_push($tasks,"netping");
 	array_push($tasks,"endping");
 	array_push($tasks,"bblping");
 	array_push($tasks,"uplping");
 	array_push($tasks,"eplping");
 	array_push($tasks,"gwyping");
-	*/
 	
 	return true;
 }
