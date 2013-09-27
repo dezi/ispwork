@@ -1231,18 +1231,10 @@ function Main()
 		exit();
 	}
 
-	$GLOBALS[ "myshmident" ] = shm_attach(ftok(__FILE__ ,"m"),128 * 1024);	
-	$GLOBALS[ "mysemident" ] = sem_get   (ftok(__FILE__ ,"s"));	
-
-	if (($GLOBALS[ "myshmident" ] === false) || 
-		($GLOBALS[ "mysemident" ] === false))
-	{
-		echo "Sorry, cannot attach shared memory...\n";
-		exit();
-	}
-	
 	if (count($_SERVER[ "argv" ]) > 1)
 	{
+		shm_remove(shm_attach(ftok(__FILE__ ,"m")););
+		
 		$selfname = $_SERVER[ "argv" ][ 0 ];
 		$numprocs = intval($_SERVER[ "argv" ][ 1 ]);
 	
@@ -1250,6 +1242,16 @@ function Main()
 	}
 	else
 	{
+		$GLOBALS[ "myshmident" ] = shm_attach(ftok(__FILE__ ,"m"),128 * 1024);	
+		$GLOBALS[ "mysemident" ] = sem_get   (ftok(__FILE__ ,"s"));	
+
+		if (($GLOBALS[ "myshmident" ] === false) || 
+			($GLOBALS[ "mysemident" ] === false))
+		{
+			echo "Sorry, cannot attach shared memory...\n";
+			exit();
+		}
+	
 		MainLoop($GLOBALS[ "server_host" ],$GLOBALS[ "server_port" ]);
 	}
 }
