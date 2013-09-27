@@ -469,6 +469,8 @@ function HasHostIP($host)
 	
 	sem_release($GLOBALS[ "mysemident" ]);
 	
+	echo "HasHostIP: " . count($shared) . "\n";
+	
 	return isset($shared[ $host ]);
 }
 
