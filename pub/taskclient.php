@@ -635,14 +635,15 @@ function WebPingTask($task)
 			if ($ms == -1) $ms = $ms3 = WebPing($host,3000);
 			
 			$hostip = isset($GLOBALS[ "hostip" ][ $host ]) ? $GLOBALS[ "hostip" ][ $host ] : "n.n.";
+			$ipzero = IPZero($hostip);
 			
 			if ($ms == -1)
 			{
-				echo "$what: failed " . $host . " = $hostip = $ms1 $ms2 $ms3\n";
+				echo "$what: failed $ipzero = $host = $ms1 $ms2 $ms3\n";
 			}
 			else
 			{
-				echo "$what: pinged " . $host . " = $hostip = $ms\n";
+				echo "$what: pinged $ipzero = $host = $ms\n";
 			}
 			
 			array_push($result[ "list" ],$ms);
@@ -814,7 +815,7 @@ function NetPingTask($task)
 			$ms = Ping($ip);
 			array_push($result[ "list" ],$ms);
 			
-			echo "netping: " . IPZero($ip) . " => $ms\n";
+			echo "netping: " . (($ms == -1) ? "failed " : "pinged ") . IPZero($ip) . " => $ms\n";
 
 			if (! CheckLine()) return null;
 		}
@@ -826,18 +827,21 @@ function NetPingTask($task)
 		$upto = IP2Bin($task[ "upto" ]);
 		$pcnt = $upto - $from;
 		
-		echo "netping: " . IPZero($from) . "/" . $pcnt . " start...\n";
+		echo "netping: subnet " . IPZero($from) . "/" . $pcnt . "\n";
+		
+		$pc = 0;
 		
 		for ($binip = $from; $binip <= $upto; $binip++)
 		{
 			$ms = Ping(Bin2IP($binip));
+			if ($ms != 1) $pc++;
 			
 			array_push($result[ "list" ],$ms);
 
 			if (! CheckLine()) return null;
 		}
 		
-		echo "netping: " . IPZero($from) . "/" .  $pcnt . " done...\n";
+		echo "netping: " . (($pc == 0) ? "failed " : "pinged ") . IPZero($from) . "/" .  $pcnt . " => $pc\n";
 	}
 	
 	if (! CheckTask($task)) return null;
